@@ -2,20 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SYNTHOS — AI-Powered SaaS Platform",
+  title: "SYNTHOS — AI-Native Production Studio",
   description:
-    "SYNTHOS is the intelligent SaaS platform powered by OpenClaw. Build, automate, and scale your workflows with cutting-edge AI.",
-  keywords: ["AI", "SaaS", "automation", "OpenClaw", "productivity"],
+    "Synthesize stories. Ship scenes. Scale everything. The AI-native production studio powered by OpenClaw Engine.",
+  keywords: ["AI video", "production studio", "anime", "OpenClaw", "animation", "script", "SYNTHOS"],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-[#0a0a14] text-white antialiased">
+      <body className="min-h-screen bg-[#07070f] text-[#e2e2f0] antialiased">
         {children}
       </body>
     </html>
