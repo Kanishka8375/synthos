@@ -9,23 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        synthos: {
-          50: "#f0e7ff",
-          100: "#d9bfff",
-          200: "#b980ff",
-          300: "#9a40ff",
-          400: "#8020ff",
-          500: "#7C3AED",
-          600: "#6D28D9",
-          700: "#5b21b6",
-          800: "#4c1d95",
-          900: "#3b0764",
+        brand: {
+          indigo: "#4F46E5",
+          pink: "#EC4899",
         },
       },
       backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "brand-gradient": "linear-gradient(135deg, #4F46E5, #EC4899)",
+        "brand-gradient-r": "linear-gradient(to right, #4F46E5, #EC4899)",
+      },
+      animation: {
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
