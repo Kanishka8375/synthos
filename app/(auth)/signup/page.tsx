@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Cpu, Eye, EyeOff, AlertCircle, Check } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function SignupPage() {
 
     setErrors({});
     setLoading(true);
-    setTimeout(() => { window.location.href = "/dashboard"; }, 1200);
+    setTimeout(() => { router.push("/dashboard"); }, 1200);
   };
 
   return (

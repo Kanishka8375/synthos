@@ -41,7 +41,10 @@ export function Hero() {
           >
             Start your studio <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className="flex items-center gap-2 glass glass-hover text-gray-300 hover:text-white px-8 py-4 rounded-xl font-semibold text-lg">
+          <button
+            onClick={() => alert("Demo video — coming soon!")}
+            className="flex items-center gap-2 glass glass-hover text-gray-300 hover:text-white px-8 py-4 rounded-xl font-semibold text-lg"
+          >
             <Play className="w-5 h-5 fill-current" />
             Watch demo
           </button>

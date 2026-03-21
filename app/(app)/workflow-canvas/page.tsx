@@ -49,7 +49,7 @@ export default function WorkflowCanvasPage() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)]">
+    <div className="flex flex-col h-[calc(100vh-56px)]">
       <DashHeader title="Workflow Canvas" description="Visual node-based pipeline editor"
         actions={
           <div className="flex items-center gap-2">

@@ -28,9 +28,6 @@ export function HowItWorks() {
                 <h3 className="text-lg font-semibold text-white mb-1">{step.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
               </div>
-              {i < steps.length - 1 && (
-                <div className="hidden" />
-              )}
             </div>
           ))}
         </div>
