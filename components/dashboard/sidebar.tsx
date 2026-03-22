@@ -58,19 +58,23 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-2 border-t border-white/8">
-        <Link href="/"
-          className={clsx("flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all mb-0.5", collapsed && "justify-center")}
+        <button
+          onClick={() => {
+            const ok = window.confirm("Sign out of your studio?");
+            if (ok) window.location.href = "/";
+          }}
+          className={clsx("flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all mb-0.5 w-full", collapsed && "justify-center")}
           title={collapsed ? "Sign out" : undefined}
         >
           <LogOut className="w-4 h-4 shrink-0" />
           {!collapsed && "Sign out"}
-        </Link>
+        </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={clsx("flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs text-gray-600 hover:text-white hover:bg-white/5 transition-all w-full", collapsed && "justify-center")}
         >
           <ChevronLeft className={clsx("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
-          {!collapsed && "Collapse"}
+          {!collapsed && "Collapse sidebar"}
         </button>
       </div>
     </aside>

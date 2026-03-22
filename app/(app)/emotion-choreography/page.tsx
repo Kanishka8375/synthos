@@ -19,12 +19,18 @@ const CHANNELS = [
   { id: "camera", name: "Camera Language",   value: 60, color: "bg-cyan-500",   trackColor: "bg-cyan-500/20" },
 ];
 
-const PRESETS = ["Calm", "Tense", "Explosive", "Melancholy", "Comedic", "Epic"];
-const PRESET_COLORS: Record<string, string> = {
-  Calm: "border-cyan-500/40 text-cyan-300", Tense: "border-amber-500/40 text-amber-300",
-  Explosive: "border-rose-500/40 text-rose-300", Melancholy: "border-indigo-500/40 text-indigo-300",
-  Comedic: "border-emerald-500/40 text-emerald-300", Epic: "border-violet-500/40 text-violet-300",
-};
+const PRESETS: Array<{
+  name: string;
+  color: string;
+  channels: Record<string, number>;
+}> = [
+  { name: "Calm",      color: "border-cyan-500/40 text-cyan-300",     channels: { facial: 30, voice: 28, music: 22, camera: 35 } },
+  { name: "Tense",     color: "border-amber-500/40 text-amber-300",   channels: { facial: 65, voice: 70, music: 80, camera: 60 } },
+  { name: "Explosive", color: "border-rose-500/40 text-rose-300",     channels: { facial: 95, voice: 92, music: 98, camera: 88 } },
+  { name: "Melancholy",color: "border-indigo-500/40 text-indigo-300", channels: { facial: 45, voice: 55, music: 40, camera: 30 } },
+  { name: "Comedic",   color: "border-emerald-500/40 text-emerald-300",channels: { facial: 78, voice: 82, music: 65, camera: 70 } },
+  { name: "Epic",      color: "border-violet-500/40 text-violet-300", channels: { facial: 85, voice: 80, music: 99, camera: 90 } },
+];
 
 // Heat strip gradient positions for demo
 const HEAT = [20,35,45,60,85,95,88,72,55,40,30,20,15,25,40,58,72,80,75,65];
@@ -47,14 +53,17 @@ export default function EmotionChoreographyPage() {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Emotion Presets</p>
           <div className="flex items-center gap-2 flex-wrap">
             {PRESETS.map((preset) => (
-              <button key={preset}
-                onClick={() => setActivePreset(preset)}
+              <button key={preset.name}
+                onClick={() => {
+                  setActivePreset(preset.name);
+                  setChannels(prev => prev.map(c => ({ ...c, value: preset.channels[c.id] ?? c.value })));
+                }}
                 className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-all ${
-                  activePreset === preset
-                    ? `${PRESET_COLORS[preset]} bg-white/5`
+                  activePreset === preset.name
+                    ? `${preset.color} bg-white/5`
                     : "border-white/10 text-gray-500 hover:text-white hover:border-white/20"
                 }`}>
-                {preset}
+                {preset.name}
               </button>
             ))}
           </div>
@@ -97,8 +106,9 @@ export default function EmotionChoreographyPage() {
                 setPlayhead(Math.round(((e.clientX - rect.left) / rect.width) * 100));
               }} />
           </div>
+          {/* Timestamps match EP 3 duration: 23:02 */}
           <div className="flex justify-between text-[10px] text-gray-600 mb-2">
-            <span>00:00</span><span>05:30</span><span>11:00</span><span>16:30</span><span>22:14</span>
+            <span>00:00</span><span>05:46</span><span>11:31</span><span>17:16</span><span>23:02</span>
           </div>
 
           {/* Emotion heat label */}

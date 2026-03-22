@@ -6,7 +6,7 @@ const steps = [
   { num: "03", title: "Script & storyboard with AI", description: "Script Writer generates episode scripts. Storyboard Agent turns scenes into visual shot sequences — in minutes.", color: "border-violet-500/40 bg-violet-500/5" },
   { num: "04", title: "Render with AnimeDiffusion", description: "Your storyboard feeds directly into AnimeDiffusion. 48 scenes render in parallel across cloud GPU clusters.", color: "border-cyan-500/40 bg-cyan-500/5" },
   { num: "05", title: "Sync audio, voice & music", description: "Voice Synthesizer generates character dialogue. Music Composer scores each scene. Everything syncs to frame.", color: "border-emerald-500/40 bg-emerald-500/5" },
-  { num: "06", title: "Distribute globally", description: "Multilingual Engine dubs your episode into 40+ languages with lip sync. Export to TikTok, YouTube, and more — one click.", color: "border-amber-500/40 bg-amber-500/5" },
+  { num: "06", title: "Distribute globally", description: "Multilingual Engine dubs your episode into 12+ languages with lip-synced voice. Export to TikTok, YouTube, and more — one click.", color: "border-amber-500/40 bg-amber-500/5" },
 ];
 
 export function HowItWorks() {

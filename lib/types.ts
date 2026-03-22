@@ -2,7 +2,7 @@
 
 export type ProjectStatus = "Draft" | "In Progress" | "Rendering" | "Completed";
 export type RenderStatus = "Queued" | "Rendering" | "Completed" | "Failed";
-export type AgentStatus = "Waiting" | "Active" | "Completed" | "Error";
+export type AgentStatus = "Waiting" | "Active" | "Completed" | "Error" | "idle";
 
 export interface Project {
   id: string;

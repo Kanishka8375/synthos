@@ -132,20 +132,23 @@ export default function BillingPage() {
             <OpenClawBadge size="sm" />
           </div>
           <div className="space-y-2.5">
-            {OPENCLAW_AGENTS_DATA.map((agent) => (
-              <div key={agent.id} className="flex items-center gap-3">
-                <p className="text-xs text-gray-400 w-36 shrink-0 truncate">{agent.name}</p>
-                <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${agent.active ? "bg-indigo-500" : "bg-gray-600"}`}
-                    style={{ width: `${Math.min(100, (agent.tasksCompleted / 6000) * 100)}%` }}
-                  />
+            {(() => {
+              const maxTasks = Math.max(...OPENCLAW_AGENTS_DATA.map(a => a.tasksCompleted));
+              return OPENCLAW_AGENTS_DATA.map((agent) => (
+                <div key={agent.id} className="flex items-center gap-3">
+                  <p className="text-xs text-gray-400 w-36 shrink-0 truncate">{agent.name}</p>
+                  <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${agent.active ? "bg-indigo-500" : "bg-gray-600"}`}
+                      style={{ width: `${Math.round((agent.tasksCompleted / maxTasks) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-500 w-20 text-right">
+                    {agent.tasksCompleted.toLocaleString()} tasks
+                  </span>
                 </div>
-                <span className="text-xs text-gray-500 w-20 text-right">
-                  {agent.tasksCompleted.toLocaleString()} tasks
-                </span>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </div>
 

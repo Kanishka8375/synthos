@@ -7,8 +7,8 @@ export const OPENCLAW_AGENTS_DATA: OpenClawAgent[] = [
   { id: "music", name: "Music Composer", role: "Generates adaptive scene soundtracks", accuracy: 88, consistency: 85, speed: 79, active: true, tasksRunning: 1, tasksCompleted: 892, uptime: 98.7 },
   { id: "bible", name: "Bible Keeper", role: "Maintains story continuity & lore consistency", accuracy: 97, consistency: 98, speed: 99, active: true, tasksRunning: 0, tasksCompleted: 4102, uptime: 100 },
   { id: "trend", name: "Trend Analyzer", role: "Monitors platform trends & audience signals", accuracy: 82, consistency: 79, speed: 95, active: true, tasksRunning: 1, tasksCompleted: 721, uptime: 99.1 },
-  { id: "translate", name: "Translation Engine", role: "Multilingual dubbing with cultural adaptation", accuracy: 93, consistency: 90, speed: 84, active: false, tasksRunning: 0, tasksCompleted: 288, uptime: 97.4 },
-  { id: "lipsync", name: "Lip Sync Engine", role: "Frame-accurate lip sync for translated audio", accuracy: 91, consistency: 88, speed: 76, active: false, tasksRunning: 0, tasksCompleted: 231, uptime: 97.2 },
+  { id: "translate", name: "Translation Engine", role: "Multilingual dubbing with cultural adaptation", accuracy: 93, consistency: 90, speed: 84, active: true, tasksRunning: 0, tasksCompleted: 288, uptime: 97.4 },
+  { id: "lipsync", name: "Lip Sync Engine", role: "Frame-accurate lip sync for translated audio", accuracy: 91, consistency: 88, speed: 76, active: true, tasksRunning: 0, tasksCompleted: 231, uptime: 97.2 },
   { id: "render", name: "Render Optimizer", role: "Schedules and optimizes GPU render jobs", accuracy: 99, consistency: 97, speed: 93, active: true, tasksRunning: 7, tasksCompleted: 5821, uptime: 99.9 },
 ];
 
