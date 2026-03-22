@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { trunc, LIMITS, validateImageFile, checkRateLimit } from "@/lib/api-guard";
 
 const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
@@ -18,12 +19,22 @@ export async function POST(request: NextRequest) {
 
   if (!HF_TOKEN) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 503 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const formData  = await request.formData();
   const imageFile = formData.get("image") as File | null;
   const model     = (formData.get("model") as string) || "svd-xt";
-  const prompt    = (formData.get("prompt") as string) || "";
+  // Level 1: truncate prompt
+  const prompt    = trunc((formData.get("prompt") as string) || "", LIMITS.PROMPT);
 
   if (!imageFile) return NextResponse.json({ error: "image file is required" }, { status: 400 });
+
+  // Level 3: file upload validation
+  const imgErr = validateImageFile(imageFile);
+  if (imgErr) return NextResponse.json({ error: imgErr }, { status: 400 });
 
   const modelId       = I2V_MODELS[model] ?? I2V_MODELS["svd-xt"];
   const imageBuffer   = await imageFile.arrayBuffer();

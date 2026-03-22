@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc } from "@/lib/api-guard";
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = "meta-llama/llama-3.3-70b-instruct";
@@ -16,7 +17,13 @@ export async function POST(request: NextRequest) {
 
   if (!OPENROUTER_KEY) return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
 
-  const { messages } = await request.json() as { messages: { role: string; content: string }[] };
+  const body = await request.json() as { messages: { role: string; content: string }[] };
+  // Level 1: cap messages array and truncate each content
+  const rawMessages = Array.isArray(body.messages) ? body.messages.slice(0, LIMITS.MESSAGES) : [];
+  const messages = rawMessages.map(m => ({
+    role:    m.role === "user" || m.role === "assistant" ? m.role : "user",
+    content: trunc(m.content, LIMITS.TEXT),
+  }));
 
   const upstream = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",

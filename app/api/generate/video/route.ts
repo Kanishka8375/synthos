@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc, clampInt, checkRateLimit } from "@/lib/api-guard";
 
 const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
@@ -16,20 +17,18 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const body = await request.json();
-  const {
-    prompt,
-    model = "zeroscope",
-    num_frames = 24,
-    fps = 8,
-    project_id,
-  } = body as {
-    prompt: string;
-    model?: string;
-    num_frames?: number;
-    fps?: number;
-    project_id?: string;
-  };
+  // Level 1: validate + clamp inputs
+  const prompt     = trunc(body.prompt, LIMITS.PROMPT);
+  const model      = body.model ?? "zeroscope";
+  const num_frames = clampInt(body.num_frames, 8, 64, 24);
+  const fps        = clampInt(body.fps, 4, 24, 8);
+  const project_id: string | undefined = body.project_id;
 
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
   if (!HF_TOKEN) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 503 });

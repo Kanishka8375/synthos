@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { HfInference } from "@huggingface/inference";
+import { LIMITS, trunc, checkRateLimit } from "@/lib/api-guard";
 
 const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
 
@@ -24,10 +25,16 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const body = await request.json();
-  const { text, model = "mms-tts" } = body;
-  if (!text || typeof text !== "string") return NextResponse.json({ error: "text is required" }, { status: 400 });
-  if (text.length > 2000) return NextResponse.json({ error: "text must be under 2000 characters" }, { status: 400 });
+  const { model = "mms-tts" } = body;
+  // Level 1: truncate to allowed max
+  const text = trunc(body.text, LIMITS.TEXT);
+  if (!text) return NextResponse.json({ error: "text is required" }, { status: 400 });
 
   const modelId = TTS_MODELS[model] ?? TTS_MODELS["mms-tts"];
 

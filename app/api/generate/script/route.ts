@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc, checkRateLimit } from "@/lib/api-guard";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -10,8 +11,17 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const body = await request.json();
-  const { prompt, project_id, genre = "Action", style = "Anime" } = body;
+  // Level 1: truncate inputs
+  const prompt     = trunc(body.prompt, LIMITS.PROMPT);
+  const project_id = body.project_id;
+  const genre      = trunc(body.genre ?? "Action", 50);
+  const style      = trunc(body.style ?? "Anime", 50);
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
   const systemPrompt = `You are a professional anime scriptwriter. Write compelling, vivid episode scripts in proper screenplay format.
@@ -47,7 +57,7 @@ Keep it focused and cinematic. Write 3-4 scenes maximum.`;
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json({ error: `OpenRouter error: ${err}` }, { status: 500 });
+      return NextResponse.json({ error: "Script generation failed" }, { status: 502 });
     }
 
     const data = await res.json();
@@ -93,7 +103,7 @@ export async function GET(request: NextRequest) {
   if (project_id) query.eq("project_id", project_id);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Internal error" }, { status: 500 });
 
   return NextResponse.json({ scripts: data });
 }

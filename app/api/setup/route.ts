@@ -11,6 +11,11 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 export async function POST(request: NextRequest) {
+  // Level 5: block this endpoint entirely in production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const setupKey = request.headers.get("x-setup-key");
   const validKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -50,6 +55,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   return NextResponse.json({
     info: "POST to /api/setup with x-setup-key: YOUR_SERVICE_ROLE_KEY to create database tables",
     required_env: [

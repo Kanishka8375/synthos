@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { HfInference } from "@huggingface/inference";
+import { LIMITS, trunc, clampFloat, clampInt, validateImageFile, checkRateLimit } from "@/lib/api-guard";
 
 const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
 
@@ -16,16 +17,29 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const formData = await request.formData();
   const imageFile = formData.get("image") as File | null;
-  const prompt    = formData.get("prompt") as string | null;
+  const rawPrompt = formData.get("prompt") as string | null;
   const model     = (formData.get("model") as string) || "pix2pix";
-  const negative_prompt = (formData.get("negative_prompt") as string) || undefined;
-  const strength  = parseFloat((formData.get("strength") as string) || "0.75");
-  const steps     = parseInt((formData.get("steps") as string) || "20", 10);
+  const rawNeg    = formData.get("negative_prompt") as string | null;
+
+  // Level 1: validate + clamp inputs
+  const prompt   = trunc(rawPrompt ?? "", LIMITS.PROMPT);
+  const strength = clampFloat(formData.get("strength"), 0, 1, 0.75);
+  const steps    = clampInt(formData.get("steps"), 1, 50, 20);
+  const negative_prompt = rawNeg ? trunc(rawNeg, LIMITS.PROMPT) : undefined;
 
   if (!imageFile) return NextResponse.json({ error: "image file is required" }, { status: 400 });
   if (!prompt)    return NextResponse.json({ error: "prompt is required" }, { status: 400 });
+
+  // Level 3: file upload validation
+  const imgErr = validateImageFile(imageFile);
+  if (imgErr) return NextResponse.json({ error: imgErr }, { status: 400 });
 
   const modelId  = MODELS[model] ?? MODELS["pix2pix"];
   const imageBlob = new Blob([await imageFile.arrayBuffer()], { type: imageFile.type || "image/jpeg" });

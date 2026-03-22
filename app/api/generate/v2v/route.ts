@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { HfInference } from "@huggingface/inference";
+import { LIMITS, trunc, clampFloat, validateImageFile, checkRateLimit } from "@/lib/api-guard";
 
 const hf     = new HfInference(process.env.HUGGINGFACE_TOKEN);
 const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
@@ -23,14 +24,24 @@ export async function POST(request: NextRequest) {
 
   if (!HF_TOKEN) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 503 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const formData  = await request.formData();
-  const frameFile = formData.get("frame") as File | null;   // first frame extracted client-side
-  const prompt    = formData.get("prompt") as string | null; // style/transform description
-  const strength  = parseFloat((formData.get("strength") as string) || "0.6");
+  const frameFile = formData.get("frame") as File | null;
+  // Level 1: validate + clamp inputs
+  const prompt    = trunc((formData.get("prompt") as string) ?? "", LIMITS.PROMPT);
+  const strength  = clampFloat(formData.get("strength"), 0, 1, 0.6);
   const i2vModel  = (formData.get("i2v_model") as string) || "svd-xt";
 
   if (!frameFile) return NextResponse.json({ error: "frame image is required" }, { status: 400 });
   if (!prompt)    return NextResponse.json({ error: "transform prompt is required" }, { status: 400 });
+
+  // Level 3: file upload validation
+  const frameErr = validateImageFile(frameFile);
+  if (frameErr) return NextResponse.json({ error: frameErr }, { status: 400 });
 
   const I2V_MODELS: Record<string, string> = {
     "svd-xt": "stabilityai/stable-video-diffusion-img2vid-xt",

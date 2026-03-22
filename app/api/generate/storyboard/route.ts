@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc, checkRateLimit } from "@/lib/api-guard";
 
 const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
 
@@ -20,12 +21,20 @@ export async function POST(request: NextRequest) {
     project_id?: string;
   };
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
+  // Level 1: validate scenes
   if (!scenes?.length) return NextResponse.json({ error: "scenes array is required" }, { status: 400 });
-  if (scenes.length > 8)  return NextResponse.json({ error: "Max 8 scenes per storyboard" }, { status: 400 });
+  if (scenes.length > 8) return NextResponse.json({ error: "Max 8 scenes per storyboard" }, { status: 400 });
+  // Truncate each scene description
+  const safescenes: string[] = scenes.map((s: unknown) => trunc(String(s ?? ""), LIMITS.SCENE)).filter(Boolean);
 
   // Generate all scene image URLs in parallel (Pollinations generates lazily on load)
   const frames = await Promise.all(
-    scenes.map(async (scene, i) => {
+    safescenes.map(async (scene, i) => {
       const seed = Math.floor(Math.random() * 999999);
       const prompt = encodeURIComponent(
         `${style} style, storyboard panel ${i + 1}, high quality, cinematic: ${scene}`

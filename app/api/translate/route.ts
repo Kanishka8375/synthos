@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc } from "@/lib/api-guard";
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const MODEL = "meta-llama/llama-3.3-70b-instruct";
@@ -11,11 +12,11 @@ export async function POST(request: NextRequest) {
 
   if (!OPENROUTER_KEY) return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
 
-  const { text, targetLanguage, targetCode } = await request.json() as {
-    text: string;
-    targetLanguage: string;
-    targetCode: string;
-  };
+  const raw = await request.json() as { text: string; targetLanguage: string; targetCode: string };
+  // Level 1: truncate text input
+  const text           = trunc(raw.text, LIMITS.TEXT);
+  const targetLanguage = trunc(raw.targetLanguage ?? "", 50);
+  const targetCode     = trunc(raw.targetCode ?? "", 10);
 
   if (!text || !targetLanguage) return NextResponse.json({ error: "text and targetLanguage required" }, { status: 400 });
 

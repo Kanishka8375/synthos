@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, trunc, checkRateLimit } from "@/lib/api-guard";
 
 const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
@@ -36,10 +37,17 @@ export async function POST(request: NextRequest) {
     model = "musicgen-small",
     project_id,
   } = body;
-  if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
+  // Level 1: truncate prompt
+  const safePrompt = trunc(prompt, LIMITS.PROMPT);
+  if (!safePrompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
   const moodStr  = MOOD_KEYWORDS[(mood as string).toLowerCase()] ?? mood;
-  const fullPrompt = `${genre} music, ${moodStr}, high quality audio, ${prompt}`;
+  const fullPrompt = `${genre} music, ${moodStr}, high quality audio, ${safePrompt}`;
 
   const { id: modelId, tokens } = MUSIC_MODELS[model] ?? MUSIC_MODELS["musicgen-small"];
 

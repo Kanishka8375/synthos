@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { HfInference } from "@huggingface/inference";
+import { LIMITS, trunc, clampDim, checkRateLimit } from "@/lib/api-guard";
 
 const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
 
@@ -29,16 +30,27 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Level 4: rate limit
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const body = await request.json();
   const {
-    prompt,
+    prompt: rawPrompt,
     style,
     model = "flux-schnell",
-    width = 896,
-    height = 504,
-    negative_prompt,
+    width:  rawWidth  = 896,
+    height: rawHeight = 504,
+    negative_prompt: rawNeg,
   } = body;
+
+  // Level 1: validate + clamp inputs
+  const prompt = trunc(rawPrompt, LIMITS.PROMPT);
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
+  const width    = clampDim(rawWidth, 896);
+  const height   = clampDim(rawHeight, 504);
+  const negative_prompt = rawNeg ? trunc(rawNeg, LIMITS.PROMPT) : undefined;
 
   const styleKey = (style ?? "").toLowerCase();
   const stylePrefix = STYLE_MAP[styleKey] ?? (style ? `${style} style` : "");
