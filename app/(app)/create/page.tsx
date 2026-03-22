@@ -3,646 +3,762 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sparkles, ImageIcon, VideoIcon, Music2, Download, RefreshCw,
-  ChevronDown, Zap, Clock, Maximize2, Copy, Check, X, Play, Pause,
-  Volume2, VolumeX, RotateCcw, Loader2,
+  Upload, User, FileText, Sparkles, Download, RefreshCw,
+  ChevronRight, ChevronLeft, CheckCircle2, Loader2, X,
+  Camera, Zap, Lock, Film, AlertCircle,
 } from "lucide-react";
+import { strToU8, zipSync } from "fflate";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
-type Mode = "image" | "video" | "music";
-type Result =
-  | { type: "image"; url: string; prompt: string }
-  | { type: "video"; objectUrl: string; prompt: string }
-  | { type: "music"; url: string; prompt: string };
+interface CharacterLock {
+  id:              string | null;
+  name:            string;
+  face_image_url:  string | null;
+  face_descriptor: string;
+  preview_url:     string | null; // local blob URL for preview
+}
 
-/* ─── Option lists ───────────────────────────────────────────────────────── */
-const IMAGE_STYLES  = ["Anime", "Cinematic", "Photorealistic", "Manga", "Oil Painting", "3D Render", "Pixel Art", "Watercolor"];
-const VIDEO_MODELS  = ["wan", "veo", "seedance", "ltx-2", "p-video"];
-const ASPECT_RATIOS = ["16:9", "9:16", "1:1"];
-const DURATIONS     = [4, 6, 8];
-const MUSIC_MOODS   = ["Epic", "Calm", "Tense", "Upbeat", "Melancholic", "Futuristic", "Dark", "Romantic"];
-const MUSIC_GENRES  = ["Orchestral", "Electronic", "Lo-fi", "Ambient", "Rock", "Jazz", "Cinematic", "Pop"];
+interface Scene {
+  scene_number:      number;
+  description:       string;
+  camera_angle:      string;
+  lighting_mood:     string;
+  character_emotion: string;
+}
 
-const PLACEHOLDERS: Record<Mode, string[]> = {
-  image: [
-    "A samurai standing in a neon-lit rain alley, cyberpunk Tokyo…",
-    "Dragon soaring over misty mountains at golden hour, epic wide shot…",
-    "Underwater city with bioluminescent creatures and ancient ruins…",
-  ],
-  video: [
-    "A phoenix rising from volcanic lava, feathers catching fire, slow motion…",
-    "Time-lapse of a cherry blossom tree blooming, petals falling in the wind…",
-    "Astronaut floating weightlessly inside a futuristic space station…",
-  ],
-  music: [
-    "Epic orchestral battle theme with intense drums and soaring strings…",
-    "Lo-fi chill beats with soft piano and rain ambience in the background…",
-    "Dark electronic soundtrack with pulsing bass and eerie synth layers…",
-  ],
-};
+type SceneStatus = "pending" | "generating" | "done" | "error";
 
-/* ─── Page ───────────────────────────────────────────────────────────────── */
-export default function CreatePage() {
-  const [mode,        setMode]        = useState<Mode>("image");
-  const [prompt,      setPrompt]      = useState("");
-  const [style,       setStyle]       = useState("Anime");
-  const [videoModel,  setVideoModel]  = useState("wan");
-  const [aspectRatio, setAspectRatio] = useState("16:9");
-  const [duration,    setDuration]    = useState(4);
-  const [mood,        setMood]        = useState("Epic");
-  const [genre,       setGenre]       = useState("Orchestral");
-  const [loading,     setLoading]     = useState(false);
-  const [progress,    setProgress]    = useState(0);
-  const [result,      setResult]      = useState<Result | null>(null);
-  const [error,       setError]       = useState<string | null>(null);
-  const [copied,      setCopied]      = useState(false);
-  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+interface SceneWithStatus extends Scene {
+  status:    SceneStatus;
+  image_url: string | null;
+  error:     string | null;
+}
 
-  const blobUrlRef    = useRef<string | null>(null);
-  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+const STYLES = ["Anime", "Cinematic", "Manga", "Photorealistic", "Dark Fantasy", "Watercolor"];
 
-  /* Rotate placeholder text */
-  useEffect(() => {
-    const t = setInterval(() => setPlaceholderIdx(i => (i + 1) % 3), 4000);
-    return () => clearInterval(t);
-  }, []);
+const EXAMPLE_SCRIPT = `INT. NEON ALLEY - NIGHT
 
-  /* Clean up blob URL on unmount */
-  useEffect(() => () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); }, []);
+Rain hammers against the pavement as KAITO steps out of the shadows, hand on his katana.
 
-  const stopProgress = () => {
-    if (progressTimer.current) { clearInterval(progressTimer.current); progressTimer.current = null; }
-  };
+He surveys the neon-lit street — holographic ads flicker overhead, reflecting off puddles.
 
-  const startProgress = (speed: number) => {
-    stopProgress();
-    progressTimer.current = setInterval(() => {
-      setProgress(p => Math.min(p + speed, 92));
-    }, 400);
-  };
+A figure emerges from the fog ahead. They face each other across the empty alley.
 
-  const generate = useCallback(async () => {
-    if (!prompt.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setProgress(0);
+KAITO charges forward. Steel clashes. They fight across rooftops, lightning illuminating every strike.
 
-    try {
-      if (mode === "image") {
-        startProgress(3);
-        const res  = await fetch("/api/generate/image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            style,
-            width: 896,
-            height: 504,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Image generation failed");
-        setResult({ type: "image", url: data.url, prompt });
+The enemy falls. Kaito stands alone at the edge, staring at the city below, rain pouring down.`;
 
-      } else if (mode === "video") {
-        startProgress(0.6);
-        const res = await fetch("/api/generate/video", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, model: videoModel, duration, aspectRatio }),
-        });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error((data as { error?: string }).error ?? "Video generation failed");
-        }
-        if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-        const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        blobUrlRef.current = objectUrl;
-        setResult({ type: "video", objectUrl, prompt });
-
-      } else {
-        startProgress(2);
-        const res  = await fetch("/api/generate/music", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, mood, genre, duration: 30 }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Music generation failed");
-        const url = data.audio ?? data.url ?? "";
-        setResult({ type: "music", url, prompt });
-      }
-
-      setProgress(100);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed. Please try again.");
-    } finally {
-      stopProgress();
-      setLoading(false);
-    }
-  }, [prompt, mode, style, videoModel, aspectRatio, duration, mood, genre, loading]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) generate();
-  };
-
-  const handleDownload = () => {
-    if (!result) return;
-    const url = result.type === "video" ? result.objectUrl : result.url;
-    const ext  = result.type === "video" ? "mp4" : result.type === "music" ? "wav" : "png";
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `synthos-${result.type}-${Date.now()}.${ext}`;
-    a.click();
-  };
-
-  const handleCopyUrl = async () => {
-    if (!result || result.type === "video") return;
-    await navigator.clipboard.writeText(result.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const switchMode = (m: Mode) => {
-    setMode(m);
-    setResult(null);
-    setError(null);
-  };
-
+/* ─── Step indicator ─────────────────────────────────────────────────────── */
+function StepBar({ step }: { step: number }) {
+  const steps = [
+    { n: 1, label: "Character" },
+    { n: 2, label: "Script" },
+    { n: 3, label: "Scenes" },
+    { n: 4, label: "Generate" },
+  ];
   return (
-    <div className="min-h-screen bg-[#07070f] flex flex-col items-center py-10 px-4 pb-20">
-
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex flex-col items-center mb-8"
-      >
-        <div className="flex items-center gap-2.5 mb-1.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <Sparkles className="w-4.5 h-4.5 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
-              Create
-            </span>
-          </h1>
-        </div>
-        <p className="text-gray-500 text-sm">Generate images, videos, and music with AI</p>
-      </motion.div>
-
-      {/* ── Mode selector ──────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.05 }}
-        className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl p-1 mb-6"
-      >
-        {([
-          { key: "image" as Mode, Icon: ImageIcon, label: "Image" },
-          { key: "video" as Mode, Icon: VideoIcon, label: "Video" },
-          { key: "music" as Mode, Icon: Music2,    label: "Music" },
-        ] as const).map(({ key, Icon, label }) => (
-          <button
-            key={key}
-            onClick={() => switchMode(key)}
-            className={`
-              flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-              ${mode === key
-                ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]"
-                : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-              }
-            `}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
-      </motion.div>
-
-      {/* ── Prompt card ────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="w-full max-w-3xl"
-      >
-        <div className="relative bg-white/[0.04] border border-white/[0.10] rounded-2xl overflow-hidden
-                        focus-within:border-indigo-500/50 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.08)]
-                        transition-all duration-200">
-
-          {/* Textarea */}
-          <AnimatePresence mode="wait">
-            <motion.textarea
-              key={mode}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={PLACEHOLDERS[mode][placeholderIdx]}
-              rows={4}
-              className="w-full bg-transparent text-white text-[15px] leading-relaxed placeholder-gray-600
-                         px-5 pt-5 pb-3 resize-none focus:outline-none"
-            />
-          </AnimatePresence>
-
-          {/* Options row */}
-          <div className="flex items-center gap-2 px-4 pb-4 pt-1 flex-wrap">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={mode + "-opts"}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 6 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 flex-wrap"
-              >
-                {mode === "image" && (
-                  <OptionSelect value={style} onChange={setStyle} options={IMAGE_STYLES} label="Style" />
-                )}
-                {mode === "video" && (
-                  <>
-                    <OptionSelect value={videoModel}  onChange={setVideoModel}  options={VIDEO_MODELS}  label="Model"  />
-                    <OptionSelect value={aspectRatio} onChange={setAspectRatio} options={ASPECT_RATIOS} label="Ratio"
-                      icon={<Maximize2 className="w-3 h-3" />} />
-                    <OptionSelect
-                      value={String(duration) + "s"}
-                      onChange={v => setDuration(parseInt(v))}
-                      options={DURATIONS.map(d => d + "s")}
-                      label="Duration"
-                      icon={<Clock className="w-3 h-3" />}
-                    />
-                  </>
-                )}
-                {mode === "music" && (
-                  <>
-                    <OptionSelect value={mood}  onChange={setMood}  options={MUSIC_MOODS}   label="Mood"  />
-                    <OptionSelect value={genre} onChange={setGenre} options={MUSIC_GENRES}  label="Genre" />
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="flex-1" />
-            <span className="text-gray-700 text-[11px] hidden sm:block select-none">⌘↵ generate</span>
-
-            {prompt.trim() && (
-              <button
-                onClick={() => { setPrompt(""); setResult(null); setError(null); }}
-                className="text-gray-600 hover:text-gray-400 transition-colors"
-                title="Clear"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-
-            <button
-              onClick={generate}
-              disabled={loading || !prompt.trim()}
-              className="
-                flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white
-                bg-gradient-to-r from-indigo-600 to-violet-600
-                hover:from-indigo-500 hover:to-violet-500
-                active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed
-                shadow-lg shadow-indigo-500/20 transition-all duration-150
-              "
-            >
-              {loading
-                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
-                : <><Zap className="w-3.5 h-3.5" /> Generate</>
-              }
-            </button>
-          </div>
-
-          {/* Progress bar */}
-          {loading && (
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/5">
-              <motion.div
-                className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500"
-                style={{ width: `${progress}%` }}
-                transition={{ duration: 0.4 }}
-              />
+    <div className="flex items-center gap-0 mb-10">
+      {steps.map((s, i) => (
+        <div key={s.n} className="flex items-center">
+          <div className="flex flex-col items-center gap-1.5">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+              step > s.n
+                ? "bg-emerald-500 border-emerald-500 text-white"
+                : step === s.n
+                  ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+                  : "bg-transparent border-white/15 text-gray-600"
+            }`}>
+              {step > s.n ? <CheckCircle2 className="w-4 h-4" /> : s.n}
             </div>
-          )}
-        </div>
-
-        {/* Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mt-3 flex items-start gap-2 px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-sm text-rose-400"
-            >
-              <X className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* ── Result / Loading skeleton ───────────────────────────────────── */}
-      <div className="w-full max-w-3xl mt-6">
-        <AnimatePresence mode="wait">
-          {loading && !result && (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.25 }}
-            >
-              <GeneratingSkeleton mode={mode} />
-            </motion.div>
-          )}
-
-          {result && !loading && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <ResultCard
-                result={result}
-                onDownload={handleDownload}
-                onCopyUrl={handleCopyUrl}
-                onRegenerate={generate}
-                copied={copied}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ── Tips row ───────────────────────────────────────────────────── */}
-      {!loading && !result && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-12 flex flex-wrap justify-center gap-3 max-w-2xl"
-        >
-          {PROMPT_TIPS[mode].map(tip => (
-            <button
-              key={tip}
-              onClick={() => setPrompt(tip)}
-              className="px-3.5 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs text-gray-500
-                         hover:text-gray-200 hover:border-white/20 hover:bg-white/[0.07] transition-all"
-            >
-              {tip}
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Generating skeleton ────────────────────────────────────────────────── */
-function GeneratingSkeleton({ mode }: { mode: Mode }) {
-  const heights = { image: "h-[440px]", video: "h-[420px]", music: "h-[160px]" };
-  const messages = {
-    image: ["Painting pixels…", "Diffusing latents…", "Sharpening details…"],
-    video: ["Rendering frames…", "This takes 30–90 seconds…", "Almost there…"],
-    music: ["Composing melody…", "Layering instruments…", "Mixing audio…"],
-  };
-  const [msgIdx, setMsgIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setMsgIdx(i => (i + 1) % messages[mode].length), 2500);
-    return () => clearInterval(t);
-  }, [mode]);
-
-  return (
-    <div className={`${heights[mode]} bg-white/[0.03] border border-white/[0.08] rounded-2xl flex flex-col items-center justify-center gap-4 overflow-hidden relative`}>
-      {/* Animated background glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-violet-500/5 animate-pulse" />
-
-      {/* Waveform bars */}
-      <div className="flex items-end gap-1 h-12 z-10">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="w-1.5 rounded-full bg-gradient-to-t from-indigo-500/60 to-violet-500/60"
-            animate={{ height: ["40%", "100%", "40%"] }}
-            transition={{ duration: 0.8 + i * 0.05, repeat: Infinity, ease: "easeInOut", delay: i * 0.06 }}
-            style={{ minHeight: 4 }}
-          />
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={msgIdx}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.3 }}
-          className="text-gray-500 text-sm z-10"
-        >
-          {messages[mode][msgIdx]}
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-/* ─── Result card ────────────────────────────────────────────────────────── */
-function ResultCard({
-  result, onDownload, onCopyUrl, onRegenerate, copied,
-}: {
-  result: Result;
-  onDownload: () => void;
-  onCopyUrl: () => void;
-  onRegenerate: () => void;
-  copied: boolean;
-}) {
-  const [muted,   setMuted]   = useState(false);
-  const [playing, setPlaying] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) { videoRef.current.play(); setPlaying(true); }
-    else { videoRef.current.pause(); setPlaying(false); }
-  };
-
-  return (
-    <div className="group relative rounded-2xl overflow-hidden border border-white/[0.10] bg-black shadow-2xl shadow-black/60">
-      {/* Media */}
-      {result.type === "image" && (
-        <img
-          src={result.url}
-          alt={result.prompt}
-          className="w-full object-cover"
-          style={{ maxHeight: 520 }}
-        />
-      )}
-
-      {result.type === "video" && (
-        <div className="relative">
-          <video
-            ref={videoRef}
-            src={result.objectUrl}
-            autoPlay
-            loop
-            muted={muted}
-            playsInline
-            className="w-full"
-            style={{ maxHeight: 520, background: "#000" }}
-          />
-          {/* Video controls overlay */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={togglePlay}
-              className="flex items-center justify-center w-9 h-9 bg-black/70 backdrop-blur-sm border border-white/20 rounded-full hover:bg-black/90 transition-all"
-            >
-              {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
-            </button>
-            <button
-              onClick={() => setMuted(m => !m)}
-              className="flex items-center justify-center w-9 h-9 bg-black/70 backdrop-blur-sm border border-white/20 rounded-full hover:bg-black/90 transition-all"
-            >
-              {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
-            </button>
-            <button
-              onClick={() => { if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play(); setPlaying(true); } }}
-              className="flex items-center justify-center w-9 h-9 bg-black/70 backdrop-blur-sm border border-white/20 rounded-full hover:bg-black/90 transition-all"
-            >
-              <RotateCcw className="w-4 h-4 text-white" />
-            </button>
+            <span className={`text-[10px] font-medium ${step === s.n ? "text-indigo-300" : step > s.n ? "text-emerald-400" : "text-gray-600"}`}>
+              {s.label}
+            </span>
           </div>
+          {i < steps.length - 1 && (
+            <div className={`w-16 h-px mx-2 mb-5 transition-colors ${step > s.n ? "bg-emerald-500/50" : "bg-white/8"}`} />
+          )}
         </div>
-      )}
-
-      {result.type === "music" && (
-        <div className="p-8 bg-gradient-to-br from-indigo-900/20 to-violet-900/20">
-          <WaveformViz />
-          <audio src={result.url} controls className="w-full mt-4" style={{ colorScheme: "dark" }} />
-        </div>
-      )}
-
-      {/* Top-right action toolbar */}
-      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-        {result.type !== "video" && (
-          <ActionButton onClick={onCopyUrl} title={copied ? "Copied!" : "Copy URL"}>
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
-          </ActionButton>
-        )}
-        <ActionButton onClick={onDownload} title="Download">
-          <Download className="w-3.5 h-3.5" />
-          <span className="text-xs">Save</span>
-        </ActionButton>
-        <ActionButton onClick={onRegenerate} title="Regenerate">
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span className="text-xs">Redo</span>
-        </ActionButton>
-      </div>
-
-      {/* Prompt caption */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-gradient-to-t from-black/80 to-transparent
-                      opacity-0 group-hover:opacity-100 transition-opacity">
-        <p className="text-white/60 text-xs line-clamp-1">"{result.prompt}"</p>
-      </div>
-    </div>
-  );
-}
-
-function ActionButton({ onClick, title, children }: {
-  onClick: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className="flex items-center gap-1.5 px-3 py-1.5 bg-black/75 backdrop-blur-md border border-white/15
-                 rounded-lg text-white/80 hover:text-white hover:bg-black/95 hover:border-white/30
-                 transition-all duration-150"
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ─── Waveform viz ───────────────────────────────────────────────────────── */
-function WaveformViz() {
-  const bars = Array.from({ length: 64 }, (_, i) =>
-    20 + Math.sin(i * 0.5) * 12 + Math.sin(i * 0.15) * 20 + Math.random() * 15
-  );
-  return (
-    <div className="flex items-end gap-0.5 h-20 w-full">
-      {bars.map((h, i) => (
-        <div
-          key={i}
-          className="flex-1 bg-gradient-to-t from-indigo-500/90 to-violet-400/70 rounded-[1px]"
-          style={{ height: `${h}%` }}
-        />
       ))}
     </div>
   );
 }
 
-/* ─── Option select ──────────────────────────────────────────────────────── */
-function OptionSelect({ value, onChange, options, label, icon }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  label: string;
-  icon?: React.ReactNode;
-}) {
+/* ─── Page ───────────────────────────────────────────────────────────────── */
+export default function CreatePage() {
+  const [step, setStep] = useState(1);
+
+  // Step 1 state
+  const [character,       setCharacter]       = useState<CharacterLock | null>(null);
+  const [uploading,       setUploading]       = useState(false);
+  const [uploadError,     setUploadError]     = useState<string | null>(null);
+  const [charName,        setCharName]        = useState("");
+  const [dragOver,        setDragOver]        = useState(false);
+  const [savedChars,      setSavedChars]      = useState<CharacterLock[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Step 2 state
+  const [script,          setScript]          = useState("");
+  const [style,           setStyle]           = useState("Anime");
+
+  // Step 3 state
+  const [scenes,          setScenes]          = useState<SceneWithStatus[]>([]);
+  const [breaking,        setBreaking]        = useState(false);
+  const [breakError,      setBreakError]      = useState<string | null>(null);
+
+  // Step 4 state
+  const [generating,      setGenerating]      = useState(false);
+  const [genProgress,     setGenProgress]     = useState(0);
+
+  /* Load saved characters with face lock */
+  useEffect(() => {
+    fetch("/api/characters/upload")
+      .then(r => r.json())
+      .then(d => {
+        const chars: CharacterLock[] = (d.characters ?? []).map((c: {
+          id: string; name: string; face_image_url?: string; face_descriptor?: string; avatar_color?: string;
+        }) => ({
+          id:              c.id,
+          name:            c.name,
+          face_image_url:  c.face_image_url ?? null,
+          face_descriptor: c.face_descriptor ?? c.name,
+          preview_url:     c.face_image_url ?? null,
+        }));
+        setSavedChars(chars);
+      })
+      .catch(() => {});
+  }, []);
+
+  /* ── Step 1: Face upload ─────────────────────────────────────────────── */
+  const handleFileSelect = useCallback(async (file: File) => {
+    setUploadError(null);
+    setUploading(true);
+
+    // Show local preview immediately
+    const previewUrl = URL.createObjectURL(file);
+
+    const fd = new FormData();
+    fd.append("face_image", file);
+    fd.append("name", charName || "Character");
+
+    try {
+      const res  = await fetch("/api/characters/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+
+      const locked: CharacterLock = {
+        id:              data.id,
+        name:            data.name,
+        face_image_url:  data.face_image_url,
+        face_descriptor: data.face_descriptor,
+        preview_url:     previewUrl,
+      };
+      setCharacter(locked);
+      setSavedChars(prev => [locked, ...prev.filter(c => c.id !== data.id)]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      URL.revokeObjectURL(previewUrl);
+    } finally {
+      setUploading(false);
+    }
+  }, [charName]);
+
+  const onFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+    e.target.value = "";
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  /* ── Step 3: Scene breakdown ─────────────────────────────────────────── */
+  const breakScript = async () => {
+    if (!script.trim()) return;
+    setBreaking(true);
+    setBreakError(null);
+    setScenes([]);
+
+    try {
+      const res  = await fetch("/api/scenes/breakdown", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          script,
+          character_name: character?.name ?? "the protagonist",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Scene breakdown failed");
+
+      const withStatus: SceneWithStatus[] = data.scenes.map((s: Scene) => ({
+        ...s,
+        status:    "pending" as SceneStatus,
+        image_url: null,
+        error:     null,
+      }));
+      setScenes(withStatus);
+      setStep(3);
+    } catch (err) {
+      setBreakError(err instanceof Error ? err.message : "Scene breakdown failed");
+    } finally {
+      setBreaking(false);
+    }
+  };
+
+  /* ── Step 4: Scene generation ────────────────────────────────────────── */
+  const generateScene = useCallback(async (sceneIdx: number) => {
+    const scene = scenes[sceneIdx];
+    if (!scene || !character) return;
+
+    setScenes(prev => prev.map((s, i) =>
+      i === sceneIdx ? { ...s, status: "generating", error: null } : s
+    ));
+
+    try {
+      const res  = await fetch("/api/scenes/generate", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          face_descriptor:    character.face_descriptor,
+          scene_description:  scene.description,
+          camera_angle:       scene.camera_angle,
+          lighting_mood:      scene.lighting_mood,
+          character_emotion:  scene.character_emotion,
+          style,
+          scene_number:       scene.scene_number,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+
+      setScenes(prev => prev.map((s, i) =>
+        i === sceneIdx ? { ...s, status: "done", image_url: data.url } : s
+      ));
+    } catch (err) {
+      setScenes(prev => prev.map((s, i) =>
+        i === sceneIdx
+          ? { ...s, status: "error", error: err instanceof Error ? err.message : "Failed" }
+          : s
+      ));
+    }
+  }, [scenes, character, style]);
+
+  const generateAll = async () => {
+    if (!character) return;
+    setGenerating(true);
+    setStep(4);
+    setGenProgress(0);
+
+    // Generate sequentially to respect rate limits
+    for (let i = 0; i < scenes.length; i++) {
+      if (scenes[i].status !== "done") {
+        await generateScene(i);
+      }
+      setGenProgress(Math.round(((i + 1) / scenes.length) * 100));
+    }
+    setGenerating(false);
+  };
+
+  /* ── ZIP download ────────────────────────────────────────────────────── */
+  const downloadZip = () => {
+    const files: Record<string, Uint8Array> = {};
+    scenes.forEach((s, i) => {
+      if (!s.image_url) return;
+      const base64 = s.image_url.split(",")[1];
+      if (!base64) return;
+      const binary = atob(base64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
+      const filename = `scene_${String(i + 1).padStart(2, "0")}.png`;
+      files[filename] = bytes;
+    });
+
+    // Add a simple README
+    const readme = `SYNTHOS Scene Pack
+Character: ${character?.name ?? "Unknown"}
+Style: ${style}
+Scenes: ${scenes.length}
+Generated: ${new Date().toISOString()}
+
+Files are numbered scene_01.png through scene_${String(scenes.length).padStart(2, "0")}.png
+Drop into DaVinci Resolve or CapCut as image sequence.
+`;
+    files["README.txt"] = strToU8(readme);
+
+    const zipped    = zipSync(files);
+    const blob      = new Blob([zipped.buffer as ArrayBuffer], { type: "application/zip" });
+    const url       = URL.createObjectURL(blob);
+    const a         = document.createElement("a");
+    a.href          = url;
+    a.download      = `synthos_pack_${character?.name?.toLowerCase().replace(/\s+/g, "_") ?? "scenes"}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const doneCount = scenes.filter(s => s.status === "done").length;
+
+  /* ─── Render ──────────────────────────────────────────────────────────── */
   return (
-    <div className="relative flex items-center">
-      {icon && <span className="absolute left-2 text-gray-500 pointer-events-none">{icon}</span>}
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        title={label}
-        className={`
-          appearance-none pr-6 py-1.5 bg-white/[0.06] border border-white/[0.10] rounded-lg
-          text-xs text-gray-300 focus:outline-none focus:border-indigo-500/50
-          cursor-pointer hover:bg-white/[0.10] hover:text-white transition-colors
-          ${icon ? "pl-6" : "pl-3"}
-        `}
+    <div className="min-h-screen bg-[#07070f] flex flex-col items-center py-10 px-4 pb-20">
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center mb-8"
       >
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-      <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-600 pointer-events-none" />
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Film className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            Consistency Engine
+          </h1>
+        </div>
+        <p className="text-gray-500 text-sm">Same character. Same world. Every frame.</p>
+      </motion.div>
+
+      <StepBar step={step} />
+
+      <div className="w-full max-w-3xl">
+        <AnimatePresence mode="wait">
+
+          {/* ── STEP 1: Character ─────────────────────────────────────── */}
+          {step === 1 && (
+            <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="glass rounded-2xl p-6 mb-4">
+                <div className="flex items-center gap-2 mb-5">
+                  <Lock className="w-4 h-4 text-indigo-400" />
+                  <h2 className="text-sm font-semibold text-white">Lock your character</h2>
+                  <span className="text-xs text-gray-600">Upload a face photo to keep them consistent across every scene</span>
+                </div>
+
+                {/* Character name */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Character name</label>
+                  <input
+                    value={charName}
+                    onChange={e => setCharName(e.target.value)}
+                    placeholder="e.g. Kaito, Sarah, Protagonist…"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                {/* Upload zone */}
+                {!character ? (
+                  <div
+                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={onDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                      dragOver
+                        ? "border-indigo-500/60 bg-indigo-500/10"
+                        : "border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5"
+                    }`}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                        <p className="text-sm text-gray-400">Uploading + analyzing face…</p>
+                        <p className="text-xs text-gray-600">BLIP is extracting the face descriptor</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                          <Upload className="w-7 h-7 text-indigo-400" />
+                        </div>
+                        <p className="text-sm text-white font-medium">Drop face photo here</p>
+                        <p className="text-xs text-gray-500">or click to browse · JPEG, PNG, WebP · max 10 MB</p>
+                      </>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={onFileInput} className="hidden" />
+                  </div>
+                ) : (
+                  /* Locked character card */
+                  <div className="rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-4 flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 bg-indigo-500/20 border border-indigo-500/30">
+                      {character.preview_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={character.preview_url} alt={character.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-8 h-8 text-indigo-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                        <span className="text-sm font-bold text-white">{character.name}</span>
+                        <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full font-medium">Locked</span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">"{character.face_descriptor}"</p>
+                    </div>
+                    <button
+                      onClick={() => { setCharacter(null); setUploadError(null); }}
+                      className="text-gray-600 hover:text-white transition-colors shrink-0"
+                      title="Remove character"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {uploadError && (
+                  <div className="mt-3 flex items-start gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    {uploadError}
+                  </div>
+                )}
+              </div>
+
+              {/* Saved characters */}
+              {savedChars.length > 0 && !character && (
+                <div className="glass rounded-2xl p-4 mb-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Or pick a saved character</p>
+                  <div className="flex flex-wrap gap-2">
+                    {savedChars.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => setCharacter(c)}
+                        className="flex items-center gap-2 px-3 py-2 glass glass-hover rounded-xl text-xs text-gray-300 hover:text-white border border-white/10 hover:border-indigo-500/40 transition-all"
+                      >
+                        {c.preview_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={c.preview_url} alt={c.name} className="w-6 h-6 rounded-full object-cover" />
+                        ) : (
+                          <User className="w-4 h-4 text-indigo-400" />
+                        )}
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={!character}
+                  className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all"
+                >
+                  Next: Write script <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── STEP 2: Script ────────────────────────────────────────── */}
+          {step === 2 && (
+            <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="glass rounded-2xl p-6 mb-4">
+                <div className="flex items-center gap-2 mb-5">
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                  <h2 className="text-sm font-semibold text-white">Paste or write your script</h2>
+                </div>
+
+                <textarea
+                  value={script}
+                  onChange={e => setScript(e.target.value)}
+                  placeholder="Paste your script, story outline, or scene descriptions…"
+                  rows={12}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none font-mono leading-relaxed"
+                />
+
+                <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+                  <button
+                    onClick={() => setScript(EXAMPLE_SCRIPT)}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    Use example script →
+                  </button>
+                  <p className="text-xs text-gray-600">{script.trim().split(/\s+/).filter(Boolean).length} words · Llama-3.3-70B will extract 5–15 scenes</p>
+                </div>
+
+                {/* Style picker */}
+                <div className="mt-4 pt-4 border-t border-white/8">
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Art style</label>
+                  <div className="flex flex-wrap gap-2">
+                    {STYLES.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setStyle(s)}
+                        className={`text-xs px-3 py-1.5 rounded-xl border transition-colors ${
+                          style === s
+                            ? "bg-indigo-600/20 text-indigo-300 border-indigo-500/30"
+                            : "text-gray-500 glass glass-hover border-white/10 hover:text-white"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {breakError && (
+                <div className="flex items-start gap-2 p-3 mb-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  {breakError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex items-center gap-2 px-4 py-2.5 glass glass-hover text-gray-400 hover:text-white rounded-xl text-sm transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Back
+                </button>
+                <button
+                  onClick={breakScript}
+                  disabled={!script.trim() || breaking}
+                  className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-all"
+                >
+                  {breaking ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing with Llama-3.3-70B…</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" /> Break into scenes</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── STEP 3: Review scenes ─────────────────────────────────── */}
+          {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="glass rounded-2xl p-5 mb-4">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-indigo-400" />
+                    <h2 className="text-sm font-semibold text-white">{scenes.length} scenes detected</h2>
+                    <span className="text-xs text-gray-600">Review and confirm before generating</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300">
+                      <Lock className="w-3 h-3" />
+                      {character?.name}
+                    </div>
+                    <span className="text-xs text-gray-600">· {style}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                  {scenes.map((scene, i) => (
+                    <div key={i} className="glass rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-xs font-bold">
+                          {scene.scene_number}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-300 leading-relaxed mb-2">{scene.description}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            <SceneChip icon={<Camera className="w-2.5 h-2.5" />} label={scene.camera_angle} color="indigo" />
+                            <SceneChip label={scene.lighting_mood} color="amber" />
+                            <SceneChip label={scene.character_emotion} color="pink" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setStep(2)}
+                  className="flex items-center gap-2 px-4 py-2.5 glass glass-hover text-gray-400 hover:text-white rounded-xl text-sm transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Edit script
+                </button>
+                <button
+                  onClick={generateAll}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/20 transition-all"
+                >
+                  <Zap className="w-4 h-4" /> Generate {scenes.length} scenes
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── STEP 4: Scene grid ────────────────────────────────────── */}
+          {step === 4 && (
+            <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+
+              {/* Progress bar */}
+              {generating && (
+                <div className="mb-4 glass rounded-2xl p-4">
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                      Generating scenes with FLUX + face lock…
+                    </span>
+                    <span className="text-indigo-300 font-semibold">{doneCount} / {scenes.length}</span>
+                  </div>
+                  <div className="h-2 bg-white/8 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                      style={{ width: `${genProgress}%` }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Scene grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                {scenes.map((scene, i) => (
+                  <SceneCard
+                    key={i}
+                    scene={scene}
+                    index={i}
+                    onRegenerate={() => generateScene(i)}
+                  />
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <button
+                  onClick={() => setStep(3)}
+                  className="flex items-center gap-2 px-4 py-2.5 glass glass-hover text-gray-400 hover:text-white rounded-xl text-sm transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Review scenes
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {!generating && doneCount < scenes.length && (
+                    <button
+                      onClick={generateAll}
+                      className="flex items-center gap-2 px-4 py-2.5 glass glass-hover text-indigo-300 hover:text-white rounded-xl text-sm border border-indigo-500/20 transition-all"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Retry failed
+                    </button>
+                  )}
+                  {doneCount > 0 && (
+                    <button
+                      onClick={downloadZip}
+                      disabled={generating}
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download {doneCount} scenes as ZIP
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-/* ─── Prompt tips ────────────────────────────────────────────────────────── */
-const PROMPT_TIPS: Record<Mode, string[]> = {
-  image: [
-    "Samurai in neon rain",
-    "Dragon at golden hour",
-    "Underwater ancient city",
-    "Futuristic Tokyo skyline",
-    "Cherry blossom spirit",
-  ],
-  video: [
-    "Phoenix rising from lava",
-    "Cherry blossom time-lapse",
-    "Astronaut floating in space",
-    "Cyberpunk city chase",
-    "Ocean waves at sunrise",
-  ],
-  music: [
-    "Epic battle theme",
-    "Lo-fi study beats",
-    "Dark electronic pulse",
-    "Romantic piano melody",
-    "Futuristic ambient",
-  ],
-};
+/* ─── Scene chip ─────────────────────────────────────────────────────────── */
+function SceneChip({
+  label, color, icon,
+}: {
+  label: string;
+  color: "indigo" | "amber" | "pink";
+  icon?: React.ReactNode;
+}) {
+  const colors = {
+    indigo: "bg-indigo-500/10 text-indigo-400",
+    amber:  "bg-amber-500/10 text-amber-400",
+    pink:   "bg-pink-500/10 text-pink-400",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${colors[color]}`}>
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+/* ─── Scene card ─────────────────────────────────────────────────────────── */
+function SceneCard({
+  scene, index, onRegenerate,
+}: {
+  scene:        SceneWithStatus;
+  index:        number;
+  onRegenerate: () => void;
+}) {
+  return (
+    <div className="glass rounded-xl overflow-hidden group">
+      {/* Image area */}
+      <div className="aspect-video relative bg-[#0a0a17]">
+        {scene.status === "generating" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="flex items-end gap-0.5 h-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-1 rounded-full bg-indigo-500/60"
+                  animate={{ height: ["30%", "100%", "30%"] }}
+                  transition={{ duration: 0.6 + i * 0.05, repeat: Infinity, ease: "easeInOut", delay: i * 0.06 }}
+                  style={{ minHeight: 3 }}
+                />
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-600">Generating…</p>
+          </div>
+        )}
+
+        {scene.status === "pending" && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[10px] text-gray-700">Scene {scene.scene_number}</span>
+          </div>
+        )}
+
+        {scene.status === "error" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2">
+            <AlertCircle className="w-5 h-5 text-rose-500/60" />
+            <p className="text-[9px] text-rose-500/60 text-center">{scene.error ?? "Failed"}</p>
+          </div>
+        )}
+
+        {scene.status === "done" && scene.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={scene.image_url}
+            alt={`Scene ${scene.scene_number}`}
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {/* Overlay: number + regen button */}
+        <div className="absolute top-1.5 left-1.5">
+          <span className="text-[10px] font-bold text-white/70 bg-black/40 rounded px-1.5 py-0.5">
+            {String(scene.scene_number).padStart(2, "0")}
+          </span>
+        </div>
+
+        {(scene.status === "done" || scene.status === "error") && (
+          <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={onRegenerate}
+              className="flex items-center gap-1 text-[10px] px-2 py-1 bg-black/70 hover:bg-indigo-600/80 text-white rounded-lg border border-white/10 transition-all"
+              title="Regenerate this scene"
+            >
+              <RefreshCw className="w-2.5 h-2.5" />
+              Redo
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Caption */}
+      <div className="p-2">
+        <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">{scene.description}</p>
+      </div>
+    </div>
+  );
+}
