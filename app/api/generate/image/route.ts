@@ -3,8 +3,27 @@ import { createClient } from "@/lib/supabase/server";
 
 const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
 
-function buildImageUrl(prompt: string, width: number, height: number, seed: number): string {
-  const encoded = encodeURIComponent(`anime style, high quality, detailed: ${prompt}`);
+const STYLE_PROMPTS: Record<string, string> = {
+  "anime":         "anime style, manga art, vibrant cel shading, 2D illustration",
+  "cinematic":     "cinematic photography, dramatic lighting, film grain, anamorphic lens, movie still, 8K HDR",
+  "photorealistic":"photorealistic, hyperrealistic, DSLR photography, 85mm lens, natural light, sharp focus, 8K, no anime, no cartoon",
+  "manga":         "manga style, black and white ink illustration, screentone shading, comic panel art",
+  "oil painting":  "oil painting, impressionist, thick brushstrokes, canvas texture, classical fine art",
+  "3d render":     "3D CGI render, octane render, ray tracing, studio lighting, physically based rendering",
+  "pixel art":     "pixel art, 16-bit retro game sprites, pixelated, retro gaming aesthetic",
+  "watercolor":    "watercolor painting, soft color washes, paper texture, loose artistic brushwork",
+};
+
+function buildImageUrl(prompt: string, style: string | undefined, width: number, height: number, seed: number): string {
+  let fullPrompt: string;
+  if (style) {
+    const styleKey = style.toLowerCase();
+    const styleKeywords = STYLE_PROMPTS[styleKey] ?? `${style} style`;
+    fullPrompt = `${styleKeywords}, high quality, detailed: ${prompt}`;
+  } else {
+    fullPrompt = `high quality, detailed: ${prompt}`;
+  }
+  const encoded = encodeURIComponent(fullPrompt);
   return `https://gen.pollinations.ai/image/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
 }
 
@@ -14,11 +33,11 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { prompt, project_id, width = 768, height = 512 } = body;
+  const { prompt, style, project_id, width = 768, height = 512 } = body;
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
   const seed = Math.floor(Math.random() * 999999);
-  const url = buildImageUrl(prompt, width, height, seed);
+  const url = buildImageUrl(prompt, style, width, height, seed);
 
   // Verify image generates before saving (gen.pollinations.ai returns real image bytes)
   try {

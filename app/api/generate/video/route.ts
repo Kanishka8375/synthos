@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
   if (!POLLINATIONS_KEY) return NextResponse.json({ error: "POLLINATIONS_API_KEY not configured" }, { status: 503 });
 
-  const encoded = encodeURIComponent(`anime style, high quality, fluid animation: ${prompt}`);
+  const encoded = encodeURIComponent(`cinematic, high quality, fluid animation, 8K: ${prompt}`);
   const videoUrl =
     `https://gen.pollinations.ai/video/${encoded}` +
     `?model=${model}&duration=${duration}&aspectRatio=${encodeURIComponent(aspectRatio)}&nologo=true`;

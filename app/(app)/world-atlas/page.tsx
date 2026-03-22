@@ -85,7 +85,8 @@ export default function WorldAtlasPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `${loc.name}, ${loc.type} location, ${loc.time_of_day} lighting, ${loc.mood} atmosphere, ${loc.lighting}, anime background art, highly detailed, cinematic`,
+          prompt: `${loc.name}, ${loc.type} location, ${loc.time_of_day} lighting, ${loc.mood} atmosphere, ${loc.lighting}, highly detailed, cinematic`,
+          style: "cinematic",
           width: 768,
           height: 432,
         }),

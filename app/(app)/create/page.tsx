@@ -95,7 +95,8 @@ export default function CreatePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: `${style} style, high quality, detailed: ${prompt}`,
+            prompt,
+            style,
             width: 896,
             height: 504,
           }),

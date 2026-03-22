@@ -75,7 +75,8 @@ export default function CharacterDnaVaultPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `${char.name}, ${char.role}, anime character portrait, ${char.appearance}, ${char.emotion_profile} expression, detailed face, close-up, studio lighting`,
+          prompt: `${char.name}, ${char.role}, character portrait, ${char.appearance}, ${char.emotion_profile} expression, detailed face, close-up, studio lighting`,
+          style: "anime",
           width: 512,
           height: 512,
         }),
