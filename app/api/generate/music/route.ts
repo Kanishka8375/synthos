@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { HfInference } from "@huggingface/inference";
 
-const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
+const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
 export const maxDuration = 90;
 
@@ -45,11 +44,23 @@ export async function POST(request: NextRequest) {
   const { id: modelId, tokens } = MUSIC_MODELS[model] ?? MUSIC_MODELS["musicgen-small"];
 
   try {
-    const audioBlob = await hf.textToAudio({
-      model: modelId,
-      inputs: fullPrompt,
-      parameters: { max_new_tokens: tokens },
-    });
+    const hfRes = await fetch(
+      `https://router.huggingface.co/models/${modelId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inputs: fullPrompt, parameters: { max_new_tokens: tokens } }),
+        signal: AbortSignal.timeout(85_000),
+      }
+    );
+    if (!hfRes.ok) {
+      const err = await hfRes.text().catch(() => "");
+      return NextResponse.json({ error: `Music generation failed: ${err}` }, { status: 502 });
+    }
+    const audioBlob = await hfRes.blob();
 
     // Fire-and-forget DB save
     supabase.from("generated_tracks").insert({
