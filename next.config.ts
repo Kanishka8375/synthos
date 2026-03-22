@@ -19,7 +19,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://*.supabase.co https://openrouter.ai https://router.huggingface.co https://api-inference.huggingface.co https://gen.pollinations.ai",
+      "connect-src 'self' https://*.supabase.co https://openrouter.ai https://router.huggingface.co https://api-inference.huggingface.co",
       "media-src 'self' blob:",
       "frame-ancestors 'none'",
     ].join("; "),
@@ -29,9 +29,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
-    remotePatterns: [
-      { protocol: "https", hostname: "image.pollinations.ai" },
-    ],
+    remotePatterns: [],
   },
   async headers() {
     return [
