@@ -89,3 +89,34 @@ create table if not exists public.generated_tracks (
 );
 alter table public.generated_tracks enable row level security;
 create policy "Users can CRUD own tracks" on public.generated_tracks for all using (auth.uid() = user_id);
+
+-- World Atlas locations table
+create table if not exists public.world_locations (
+  id          uuid default gen_random_uuid() primary key,
+  user_id     uuid references auth.users on delete cascade not null,
+  name        text not null,
+  type        text not null default 'exterior',
+  time_of_day text not null default 'Day',
+  mood        text,
+  lighting    text,
+  description text,
+  art_url     text,
+  locked      boolean default false,
+  created_at  timestamptz default now()
+);
+alter table public.world_locations enable row level security;
+create policy "Users can CRUD own locations" on public.world_locations for all using (auth.uid() = user_id);
+
+-- Production Bible entries table
+create table if not exists public.bible_entries (
+  id           uuid default gen_random_uuid() primary key,
+  user_id      uuid references auth.users on delete cascade not null,
+  title        text not null,
+  category     text not null default 'Lore',
+  content      text not null default '',
+  ai_generated boolean default false,
+  locked       boolean default false,
+  created_at   timestamptz default now()
+);
+alter table public.bible_entries enable row level security;
+create policy "Users can CRUD own bible entries" on public.bible_entries for all using (auth.uid() = user_id);
