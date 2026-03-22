@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
+const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -9,55 +9,57 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const {
-    prompt,
-    model = "wan",
-    duration = 4,
-    aspectRatio = "16:9",
-    project_id,
-  } = body as {
-    prompt: string;
-    model?: string;
-    duration?: number;
-    aspectRatio?: string;
-    project_id?: string;
-  };
+  const { prompt, project_id } = body as { prompt: string; project_id?: string };
 
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
-  const encoded = encodeURIComponent(`anime style, high quality, fluid animation: ${prompt}`);
-  const videoUrl =
-    `https://gen.pollinations.ai/video/${encoded}` +
-    `?model=${model}&duration=${duration}&aspectRatio=${encodeURIComponent(aspectRatio)}&nologo=true`;
+  if (!HF_TOKEN) {
+    return NextResponse.json({ error: "Video generation not configured (missing HUGGINGFACE_TOKEN)" }, { status: 503 });
+  }
 
-  const headers: Record<string, string> = {};
-  if (POLLINATIONS_KEY) headers["Authorization"] = `Bearer ${POLLINATIONS_KEY}`;
+  const enhancedPrompt = `anime style, high quality, fluid animation: ${prompt}`;
 
   try {
-    const pollinationsRes = await fetch(videoUrl, { headers });
+    const hfRes = await fetch(
+      "https://api-inference.huggingface.co/models/damo-vilab/text-to-video-ms-1.7b",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inputs: enhancedPrompt }),
+      }
+    );
 
-    if (!pollinationsRes.ok) {
-      const text = await pollinationsRes.text().catch(() => "");
+    if (!hfRes.ok) {
+      const text = await hfRes.text().catch(() => "");
+      // Model may be loading — surface a friendly message
+      if (hfRes.status === 503) {
+        return NextResponse.json(
+          { error: "Video model is warming up, please try again in ~30 seconds." },
+          { status: 503 }
+        );
+      }
       return NextResponse.json(
-        { error: `Video generation failed (${pollinationsRes.status}): ${text}` },
+        { error: `Video generation failed (${hfRes.status}): ${text}` },
         { status: 502 }
       );
     }
 
-    const contentType = pollinationsRes.headers.get("content-type") ?? "video/mp4";
+    const videoBuffer = await hfRes.arrayBuffer();
 
-    // Log the generation in Supabase (fire-and-forget)
+    // Save a record in Supabase (fire-and-forget)
     supabase.from("generated_images").insert({
       user_id: user.id,
       project_id: project_id ?? null,
       prompt,
-      url: videoUrl,
+      url: `hf-video://${user.id}/${Date.now()}`,
     }).then(() => {});
 
-    // Stream the binary MP4 directly back to the client
-    return new Response(pollinationsRes.body, {
+    return new Response(videoBuffer, {
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": "video/mp4",
         "Cache-Control": "no-store",
       },
     });

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
-
 function buildImageUrl(prompt: string, width: number, height: number, seed: number): string {
   const encoded = encodeURIComponent(`anime style, high quality, detailed: ${prompt}`);
   return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
@@ -19,16 +17,6 @@ export async function POST(request: NextRequest) {
 
   const seed = Math.floor(Math.random() * 999999);
   const url = buildImageUrl(prompt, width, height, seed);
-
-  const headers: Record<string, string> = {};
-  if (POLLINATIONS_KEY) headers["Authorization"] = `Bearer ${POLLINATIONS_KEY}`;
-
-  try {
-    const check = await fetch(url, { method: "HEAD", headers });
-    if (!check.ok) throw new Error("Image generation failed");
-  } catch {
-    return NextResponse.json({ error: "Image generation service unavailable" }, { status: 502 });
-  }
 
   const { data, error } = await supabase
     .from("generated_images")
