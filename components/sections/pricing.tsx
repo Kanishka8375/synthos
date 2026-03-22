@@ -15,7 +15,7 @@ export function Pricing() {
           eyebrow="Pricing"
           title="Start free."
           highlight="Scale your studio."
-          subtitle="No hidden fees. Cancel anytime. All plans include OpenClaw Engine access."
+          subtitle="No hidden fees. Cancel anytime. All plans include Synthos AI Engine access."
         />
 
         {/* Toggle */}

@@ -6,8 +6,9 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Cpu, X, Send, Sparkles, User, RotateCcw, Loader2,
+  X, Send, Sparkles, User, RotateCcw, Loader2,
 } from "lucide-react";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 
 /* ─── Context ────────────────────────────────────────────────────────────── */
 interface ChatCtx { open: () => void; close: () => void; toggle: () => void; }
@@ -20,11 +21,11 @@ interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean
 
 const WELCOME: Msg = {
   role: "assistant",
-  content: "Hi! I'm **OpenClaw**, your AI production assistant.\n\nI can help with scriptwriting, character backstories, episode plotting, world-building, dialogue polish, and getting the most out of SYNTHOS. What are you creating today?",
+  content: "Hi! I'm **Synthos AI**, your AI production assistant.\n\nI can help with scriptwriting, character backstories, episode plotting, world-building, dialogue polish, and getting the most out of SYNTHOS. What are you creating today?",
 };
 
 /* ─── Provider ───────────────────────────────────────────────────────────── */
-export function OpenClawChatProvider({ children }: { children: ReactNode }) {
+export function SynthosChatProvider({ children }: { children: ReactNode }) {
   const [isOpen,   setIsOpen]   = useState(false);
   const [messages, setMessages] = useState<Msg[]>([WELCOME]);
   const [input,    setInput]    = useState("");
@@ -173,12 +174,12 @@ export function OpenClawChatProvider({ children }: { children: ReactNode }) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <Cpu className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/30">
+                  <SynthosLogo size={32} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">OpenClaw AI</p>
-                  <p className="text-[11px] text-indigo-400">Llama 3.3 · 70B</p>
+                  <p className="text-sm font-semibold text-white">Synthos AI</p>
+                  <p className="text-[11px] text-indigo-400">AI Production Assistant</p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
@@ -248,7 +249,7 @@ export function OpenClawChatProvider({ children }: { children: ReactNode }) {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask OpenClaw anything…"
+                  placeholder="Ask Synthos AI anything…"
                   rows={2}
                   className="flex-1 bg-transparent text-sm text-white placeholder-gray-600 px-4 py-3 resize-none focus:outline-none"
                 />
@@ -311,3 +312,6 @@ const QUICK_PROMPTS = [
   "Trending anime tropes",
   "Improve my script",
 ];
+
+/** @deprecated use SynthosChatProvider */
+export const OpenClawChatProvider = SynthosChatProvider;

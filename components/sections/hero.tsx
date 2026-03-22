@@ -2,19 +2,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Play, Cpu, X, ImageIcon, VideoIcon, Music2, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Play, X, ImageIcon, VideoIcon, Music2, Sparkles, Zap } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 
-/* ─── Floating preview images (fixed seeds → consistent results) ─────────── */
-const PREVIEW_IMAGES = [
-  { prompt: "anime cyberpunk neon alley samurai rain night",      seed: 101, w: 340, h: 200, x: "-left-8",        y: "top-32",   rotate: "-3deg",  delay: 0    },
-  { prompt: "anime dragon mountain golden hour epic landscape",    seed: 202, w: 300, h: 180, x: "right-[-20px]",  y: "top-20",   rotate: "4deg",   delay: 0.15 },
-  { prompt: "anime underwater ancient city bioluminescent",        seed: 303, w: 280, h: 170, x: "left-[8%]",      y: "bottom-20",rotate: "2deg",   delay: 0.3  },
-  { prompt: "anime futuristic space station interior astronaut",   seed: 404, w: 320, h: 190, x: "right-[5%]",     y: "bottom-24",rotate: "-5deg",  delay: 0.45 },
+/* ─── Floating abstract preview cards ───────────────────────────────────── */
+const PREVIEW_CARDS = [
+  { gradient: "from-indigo-600/40 via-violet-600/30 to-pink-600/20",  label: "Cyberpunk Samurai",     x: "-8px",   y: "128px",  rotate: "-3deg",  delay: 0,    w: 340, h: 200 },
+  { gradient: "from-amber-600/40 via-orange-600/25 to-rose-600/20",   label: "Dragon Landscape",      x: "-20px",  y: "80px",   rotate: "4deg",   delay: 0.15, w: 300, h: 180, right: true },
+  { gradient: "from-cyan-600/40 via-teal-600/25 to-emerald-600/20",   label: "Ancient Ocean City",    x: "8%",     y: "-80px",  rotate: "2deg",   delay: 0.3,  w: 280, h: 170 },
+  { gradient: "from-violet-600/40 via-purple-600/25 to-fuchsia-600/20",label: "Space Station",         x: "5%",     y: "-96px",  rotate: "-5deg",  delay: 0.45, w: 320, h: 190, right: true },
 ];
-
-const floatUrl = (prompt: string, seed: number, w: number, h: number) =>
-  `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&seed=${seed}&nologo=true`;
 
 /* ─── Stagger helpers ────────────────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
@@ -41,30 +39,37 @@ export function Hero() {
           <div className="absolute inset-0 bg-radial-gradient" style={{ background: "radial-gradient(ellipse at center, transparent 40%, #07070f 90%)" }} />
         </div>
 
-        {/* ── Floating image cards ─────────────────────────────────── */}
-        {PREVIEW_IMAGES.map((img, i) => (
+        {/* ── Floating abstract preview cards ──────────────────────── */}
+        {PREVIEW_CARDS.map((card, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 0.22, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 + img.delay, ease: "easeOut" }}
-            className={`absolute hidden lg:block pointer-events-none select-none`}
+            transition={{ duration: 0.8, delay: 0.6 + card.delay, ease: "easeOut" }}
+            className="absolute hidden lg:block pointer-events-none select-none"
             style={{
-              [img.x.startsWith("left") ? "left" : "right"]: img.x.replace(/^(left|right)-?\[?/, "").replace(/\]$/, ""),
-              [img.y.startsWith("top") ? "top" : "bottom"]:  img.y.replace(/^(top|bottom)-/, ""),
-              transform: `rotate(${img.rotate})`,
+              [card.right ? "right" : "left"]: card.x,
+              [card.y.startsWith("-") ? "bottom" : "top"]: card.y.replace("-", ""),
+              transform: `rotate(${card.rotate})`,
+              width: card.w,
+              height: card.h,
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={floatUrl(img.prompt, img.seed, img.w, img.h)}
-              alt=""
-              width={img.w}
-              height={img.h}
-              className="rounded-2xl border border-white/10 shadow-2xl shadow-black/60"
-              style={{ filter: "blur(0.5px)" }}
-              loading="lazy"
-            />
+            <div
+              className={`w-full h-full rounded-2xl border border-white/10 shadow-2xl shadow-black/60 bg-gradient-to-br ${card.gradient} relative overflow-hidden`}
+            >
+              {/* Noise texture overlay */}
+              <div className="absolute inset-0 opacity-20"
+                style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
+              />
+              {/* Shimmer lines */}
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_0%,transparent_50%,rgba(255,255,255,0.04)_100%)]" />
+              {/* Label */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                <span className="text-[10px] text-white/50 font-medium truncate">{card.label}</span>
+              </div>
+            </div>
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/40 to-transparent" />
           </motion.div>
         ))}
@@ -74,8 +79,8 @@ export function Hero() {
 
           {/* Badge */}
           <motion.div {...fadeUp(0)} className="inline-flex items-center gap-2.5 glass rounded-full px-4 py-2 text-sm text-indigo-300 mb-8 border border-indigo-500/20">
-            <Cpu className="w-4 h-4" />
-            Powered by OpenClaw Engine · 9 AI Agents
+            <SynthosLogo size={16} />
+            Synthos AI Engine · 9 AI Agents
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </motion.div>
 
@@ -171,8 +176,8 @@ export function Hero() {
             <div className="flex h-[360px] overflow-hidden">
               {/* Mini sidebar */}
               <div className="w-12 bg-[#07070f] border-r border-white/[0.06] flex flex-col items-center py-3 gap-3 shrink-0">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-                  <Cpu className="w-3.5 h-3.5 text-white" />
+                <div className="w-7 h-7 rounded-lg overflow-hidden">
+                  <SynthosLogo size={28} />
                 </div>
                 <div className="h-px w-6 bg-white/10 mt-1" />
                 {[Sparkles, ImageIcon, VideoIcon, Music2].map((Icon, i) => (
@@ -214,15 +219,22 @@ export function Hero() {
                   </div>
                 </div>
 
-                {/* Generated image preview */}
-                <div className="w-full max-w-lg rounded-xl overflow-hidden border border-white/[0.08] relative flex-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={floatUrl("anime samurai cyberpunk neon rain cinematic dramatic", 777, 600, 340)}
-                    alt="Generated anime scene preview"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                {/* Generated image preview — abstract gradient art */}
+                <div className="w-full max-w-lg rounded-xl overflow-hidden border border-white/[0.08] relative flex-1 bg-gradient-to-br from-indigo-900/60 via-violet-900/40 to-pink-900/30">
+                  {/* Decorative noise/texture */}
+                  <div className="absolute inset-0 opacity-30"
+                    style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
                   />
+                  {/* Shimmer highlight */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_40%,rgba(99,102,241,0.3),transparent_60%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_60%,rgba(236,72,153,0.2),transparent_60%)]" />
+                  {/* Centered glow orb */}
+                  <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-violet-500/30 rounded-full blur-2xl" />
+                  {/* Scene label */}
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[9px] text-white/40 font-medium">SynthRender · Generating…</span>
+                  </div>
                   <div className="absolute top-2 right-2 flex gap-1">
                     {["Save", "Redo"].map(label => (
                       <div key={label} className="px-2 py-1 bg-black/60 backdrop-blur-sm border border-white/15 rounded-md text-[9px] text-white/80">
@@ -240,7 +252,7 @@ export function Hero() {
         </motion.div>
       </section>
 
-      {/* ── How it works modal (replaces "demo coming soon") ─────── */}
+      {/* ── How it works modal ────────────────────────────────────── */}
       <AnimatePresence>
         {demoOpen && (
           <motion.div
@@ -322,10 +334,10 @@ export function Hero() {
 }
 
 const PIPELINE_STEPS = [
-  { icon: Sparkles,  title: "Define project",      desc: "Set genre, style, and series parameters. OpenClaw reads your intent." },
+  { icon: Sparkles,  title: "Define project",      desc: "Set genre, style, and series parameters. Synthos AI reads your intent." },
   { icon: ImageIcon, title: "Build characters",    desc: "DNA-locked character profiles ensure visual consistency across episodes." },
-  { icon: Cpu,       title: "Script with AI",      desc: "Llama 3.3-70B writes full screenplays with your characters and world." },
-  { icon: VideoIcon, title: "Storyboard & render", desc: "AnimeDiffusion renders each scene with locked style consistency." },
-  { icon: Music2,    title: "Add audio",            desc: "MusicGen composes original soundtracks. Voice AI syncs dialogue." },
+  { icon: SynthosLogo as unknown as React.ComponentType<{ className?: string }>, title: "Script with AI", desc: "Synthos LLM writes full screenplays tailored to your characters and world." },
+  { icon: VideoIcon, title: "Storyboard & render", desc: "SynthRender renders each scene with locked style consistency." },
+  { icon: Music2,    title: "Add audio",            desc: "SynthSound composes original soundtracks. Voice AI syncs dialogue." },
   { icon: ArrowRight,title: "Publish globally",    desc: "40+ language dubbing with lip-sync for worldwide distribution." },
 ];

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { MOCK_WORKFLOW_NODES, MOCK_WORKFLOW_EDGES } from "@/lib/mock-data";
 import { Plus, Save, Play, RotateCcw, CheckCircle2, Wand2, X, Loader2, Image as ImageIcon, ChevronRight } from "lucide-react";
 
@@ -141,7 +141,7 @@ export default function WorkflowCanvasPage() {
                 <h2 className="text-base font-semibold text-white flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-violet-400" /> AI Storyboard Generator
                 </h2>
-                <p className="text-xs text-gray-500 mt-0.5">Powered by Pollinations.ai — free, no API key</p>
+                <p className="text-xs text-gray-500 mt-0.5">Powered by SynthRender</p>
               </div>
               <button onClick={() => setShowStoryboard(false)} className="text-gray-500 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
@@ -208,7 +208,7 @@ export default function WorkflowCanvasPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <p className="text-xs text-emerald-400">{frames.filter(f => f.url).length} frames generated</p>
-                    <OpenClawBadge label="Pollinations.ai" size="sm" />
+                    <SynthosBadge label="SynthRender" size="sm" />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {frames.map((frame, i) => (
@@ -310,11 +310,11 @@ export default function WorkflowCanvasPage() {
         <div className="w-52 border-l border-white/8 bg-[#0a0a17] p-3 overflow-y-auto shrink-0">
           <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-3">Selected Node</p>
           <div className="glass rounded-xl p-3 mb-3">
-            <p className="text-xs font-semibold text-indigo-300 mb-1">AnimeDiffusion</p>
-            <p className="text-[10px] text-gray-500 leading-relaxed">AnimeDiffusion v3 · Status: Active · Progress: 63%</p>
+            <p className="text-xs font-semibold text-indigo-300 mb-1">SynthRender</p>
+            <p className="text-[10px] text-gray-500 leading-relaxed">SynthRender v3 · Status: Active · Progress: 63%</p>
           </div>
           <div className="space-y-2">
-            {[["Model", "AnimeDiffusion v3"],["Steps", "40"],["CFG Scale", "7.5"],["Sampler", "DPM++ 2M"]].map(([k,v]) => (
+            {[["Model", "SynthRender v3"],["Steps", "40"],["CFG Scale", "7.5"],["Sampler", "DPM++ 2M"]].map(([k,v]) => (
               <div key={k} className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">{k}</span>
                 <span className="text-gray-300 font-medium">{v}</span>
@@ -322,7 +322,7 @@ export default function WorkflowCanvasPage() {
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-white/8 space-y-2">
-            <OpenClawBadge label="Active" size="sm" />
+            <SynthosBadge label="Active" size="sm" />
             <button onClick={() => setShowStoryboard(true)}
               className="w-full flex items-center gap-2 text-xs text-violet-400 hover:text-violet-300 glass glass-hover rounded-xl px-3 py-2 border border-violet-500/20 transition-colors">
               <ImageIcon className="w-3.5 h-3.5" /> Generate Storyboard

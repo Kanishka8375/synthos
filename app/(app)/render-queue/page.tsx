@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MOCK_RENDER_JOBS } from "@/lib/mock-data";
 import type { RenderJob } from "@/lib/types";
@@ -84,7 +84,7 @@ export default function RenderQueuePage() {
             <div className="flex items-center gap-2 mb-3">
               <Cpu className="w-4 h-4 text-indigo-400" />
               <span className="text-xs font-semibold text-white">GPU Utilization</span>
-              <OpenClawBadge label="Optimizer" size="sm" />
+              <SynthosBadge label="Optimizer" size="sm" />
             </div>
             <div className="text-3xl font-bold gradient-text mb-1">{gpuUtil}%</div>
             <div className="h-2 bg-white/8 rounded-full overflow-hidden mb-2">

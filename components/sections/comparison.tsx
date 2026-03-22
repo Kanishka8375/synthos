@@ -6,7 +6,7 @@ const features = [
   "Character consistency",
   "AI script writing",
   "AI storyboarding",
-  "AnimeDiffusion rendering",
+  "SynthRender AI rendering",
   "Adaptive music scoring",
   "Voice synthesis",
   "Multilingual lip sync",

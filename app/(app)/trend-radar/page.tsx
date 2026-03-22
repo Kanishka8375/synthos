@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
-import { OpenClawMetricsBar } from "@/components/ui/openclaw-metrics-bar";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
+import { SynthosMetricsBar } from "@/components/ui/openclaw-metrics-bar";
 import { MOCK_TRENDS } from "@/lib/mock-data";
 import type { Platform } from "@/lib/types";
 import { TrendingUp, ArrowUpRight, Wand2, Loader2, X, CheckCircle2, ChevronDown } from "lucide-react";
@@ -75,7 +75,7 @@ Format as:
     <div>
       <DashHeader title="Trend Radar" description="Real-time platform trend monitoring + AI content ideation" />
       <div className="p-5 space-y-5">
-        {/* OpenClaw Trend Analyzer */}
+        {/* Synthos AI Trend Analyzer */}
         <div className="glass rounded-2xl p-4 border border-indigo-500/20">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
@@ -85,9 +85,9 @@ Format as:
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-sm font-semibold text-white">Trend Analyzer</p>
-                  <OpenClawBadge label="24/7 Active" />
+                  <SynthosBadge label="24/7 Active" />
                 </div>
-                <OpenClawMetricsBar metrics={[
+                <SynthosMetricsBar metrics={[
                   { label: "Accuracy",       value: "82", unit: "%", color: "text-indigo-300" },
                   { label: "Platforms",      value: "4" },
                   { label: "Trends tracked", value: "721" },
@@ -161,7 +161,7 @@ Format as:
                       </div>
                       {trend.suggestedTemplate && (
                         <div className="flex items-center gap-2">
-                          <OpenClawBadge label="Suggested" size="sm" />
+                          <SynthosBadge label="Suggested" size="sm" />
                           <span className="text-xs text-indigo-300">{trend.suggestedTemplate}</span>
                         </div>
                       )}
@@ -174,7 +174,7 @@ Format as:
                       disabled={trend.generatingIdea}
                       className="w-full flex items-center justify-center gap-2 text-xs bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-300 rounded-xl py-2 border border-indigo-500/20 transition-colors disabled:opacity-60">
                       {trend.generatingIdea
-                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating idea with Llama-3.3-70B…</>
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating idea with Synthos LLM…</>
                         : <><Wand2 className="w-3.5 h-3.5" /> {trend.idea ? "Regenerate idea" : "Generate content idea"}</>
                       }
                     </button>

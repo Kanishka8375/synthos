@@ -23,7 +23,7 @@ export const MOCK_EPISODES: Episode[] = [
 export const MOCK_PIPELINE_STEPS: PipelineStep[] = [
   { id: "s1", name: "Script Generation", agent: "Script Writer", status: "Completed", progress: 100, duration: "1m 12s", output: "Episode script: 2,841 words, 48 scenes" },
   { id: "s2", name: "Storyboarding", agent: "Storyboard Agent", status: "Completed", progress: 100, duration: "3m 04s", output: "48 storyboard panels generated" },
-  { id: "s3", name: "AnimeDiffusion Render", agent: "Render Optimizer", status: "Active", progress: 63, duration: "~8m remaining", output: "31 / 48 scenes rendered" },
+  { id: "s3", name: "SynthRender Render", agent: "Render Optimizer", status: "Active", progress: 63, duration: "~8m remaining", output: "31 / 48 scenes rendered" },
   { id: "s4", name: "Quality Gate", agent: "Bible Keeper", status: "Waiting", progress: 0 },
   { id: "s5", name: "Voice Synthesis", agent: "Voice Synthesizer", status: "Waiting", progress: 0 },
   { id: "s6", name: "Music Composition", agent: "Music Composer", status: "Waiting", progress: 0 },
@@ -32,14 +32,14 @@ export const MOCK_PIPELINE_STEPS: PipelineStep[] = [
 
 export const MOCK_WORKFLOW_NODES: WorkflowNode[] = [
   { id: "n-input",      type: "input",      label: "Input",          x: 40,  y: 180, status: "Completed", description: "Project brief & style" },
-  { id: "n-script",     type: "script",     label: "Script Writer",  x: 160, y: 80,  status: "Completed", description: "OpenClaw Script Writer" },
-  { id: "n-storyboard", type: "storyboard", label: "Storyboard",     x: 160, y: 280, status: "Completed", description: "OpenClaw Storyboard Agent" },
-  { id: "n-diffusion",  type: "diffusion",  label: "AnimeDiffusion", x: 300, y: 180, status: "Active",    description: "AnimeDiffusion v3" },
-  { id: "n-quality",    type: "quality",    label: "Quality Gate",   x: 440, y: 80,  status: "Waiting",   description: "OpenClaw Bible Keeper" },
-  { id: "n-voice",      type: "voice",      label: "Voice Sync",     x: 440, y: 280, status: "Waiting",   description: "OpenClaw Voice Synthesizer" },
-  { id: "n-music",      type: "music",      label: "Music Composer", x: 580, y: 180, status: "Waiting",   description: "OpenClaw Music Composer" },
+  { id: "n-script",     type: "script",     label: "Script Writer",  x: 160, y: 80,  status: "Completed", description: "Synthos AI Script Writer" },
+  { id: "n-storyboard", type: "storyboard", label: "Storyboard",     x: 160, y: 280, status: "Completed", description: "Synthos AI Storyboard Agent" },
+  { id: "n-diffusion",  type: "diffusion",  label: "SynthRender", x: 300, y: 180, status: "Active",    description: "SynthRender v3" },
+  { id: "n-quality",    type: "quality",    label: "Quality Gate",   x: 440, y: 80,  status: "Waiting",   description: "Synthos AI Bible Keeper" },
+  { id: "n-voice",      type: "voice",      label: "Voice Sync",     x: 440, y: 280, status: "Waiting",   description: "Synthos AI Voice Synthesizer" },
+  { id: "n-music",      type: "music",      label: "Music Composer", x: 580, y: 180, status: "Waiting",   description: "Synthos AI Music Composer" },
   { id: "n-editor",     type: "editor",     label: "Editor",         x: 700, y: 180, status: "idle",      description: "AI Edit Suite" },
-  { id: "n-render",     type: "render",     label: "Final Render",   x: 820, y: 180, status: "idle",      description: "OpenClaw Render Optimizer" },
+  { id: "n-render",     type: "render",     label: "Final Render",   x: 820, y: 180, status: "idle",      description: "Synthos AI Render Optimizer" },
 ];
 
 export const MOCK_WORKFLOW_EDGES: WorkflowEdge[] = [

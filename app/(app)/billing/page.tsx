@@ -2,9 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { PRICING_TIERS } from "@/lib/constants";
-import { OPENCLAW_AGENTS_DATA } from "@/lib/openclaw";
+import { SYNTHOS_AGENTS_DATA } from "@/lib/openclaw";
 import { Check, Zap, Receipt, CreditCard, CheckCircle2 } from "lucide-react";
 
 const invoices = [
@@ -80,7 +80,7 @@ export default function BillingPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <OpenClawBadge label="All 9 agents" />
+              <SynthosBadge label="All 9 agents" />
               {!cancelled && (
                 <>
                   <button
@@ -125,16 +125,16 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* OpenClaw Agent Usage */}
+        {/* Synthos AI Agent Usage */}
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-sm font-semibold text-white">OpenClaw Agent Usage</h2>
-            <OpenClawBadge size="sm" />
+            <h2 className="text-sm font-semibold text-white">Synthos AI Agent Usage</h2>
+            <SynthosBadge size="sm" />
           </div>
           <div className="space-y-2.5">
             {(() => {
-              const maxTasks = Math.max(...OPENCLAW_AGENTS_DATA.map(a => a.tasksCompleted));
-              return OPENCLAW_AGENTS_DATA.map((agent) => (
+              const maxTasks = Math.max(...SYNTHOS_AGENTS_DATA.map(a => a.tasksCompleted));
+              return SYNTHOS_AGENTS_DATA.map((agent) => (
                 <div key={agent.id} className="flex items-center gap-3">
                   <p className="text-xs text-gray-400 w-36 shrink-0 truncate">{agent.name}</p>
                   <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden">

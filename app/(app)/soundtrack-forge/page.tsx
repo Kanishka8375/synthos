@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
-import { OpenClawMetricsBar } from "@/components/ui/openclaw-metrics-bar";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
+import { SynthosMetricsBar } from "@/components/ui/openclaw-metrics-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MOCK_TRACKS } from "@/lib/mock-data";
 import type { Track } from "@/lib/types";
@@ -170,7 +170,7 @@ export default function SoundtrackForgePage() {
     <div>
       <DashHeader
         title="Soundtrack Forge"
-        description="AI-generated adaptive scene music via HuggingFace MusicGen"
+        description="AI-generated adaptive scene music via Synthos SynthSound"
         actions={
           <button
             onClick={() => setShowModal(true)}
@@ -223,7 +223,7 @@ export default function SoundtrackForgePage() {
               <div className="flex items-center gap-2 p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
                 <Volume2 className="w-4 h-4 text-indigo-400 shrink-0" />
                 <p className="text-xs text-gray-400">
-                  Powered by <span className="text-indigo-300">facebook/musicgen-small</span> on HuggingFace (free).
+                  Powered by <span className="text-indigo-300">Synthos SynthSound</span>.
                   First generation may take 20–30s while model loads.
                 </p>
               </div>
@@ -232,7 +232,7 @@ export default function SoundtrackForgePage() {
                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all">
                 {generating
                   ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Generating…</span>
-                  : "Generate with MusicGen"
+                  : "Generate with SynthSound"
                 }
               </button>
             </div>
@@ -258,9 +258,9 @@ export default function SoundtrackForgePage() {
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-sm font-semibold text-white">Music Composer</p>
-                  <OpenClawBadge label="HuggingFace MusicGen" />
+                  <SynthosBadge label="Synthos SynthSound" />
                 </div>
-                <OpenClawMetricsBar metrics={[
+                <SynthosMetricsBar metrics={[
                   { label: "Model",           value: "musicgen-small" },
                   { label: "Tracks generated", value: tracks.filter(t => t.status === "Ready" || t.status === "Assigned").length.toString() },
                   { label: "Status",           value: musicLoading ? "Generating" : "Ready", color: musicLoading ? "text-amber-400" : "text-emerald-400" },
@@ -341,7 +341,7 @@ export default function SoundtrackForgePage() {
                           <div key={i} className="w-1 rounded-full bg-amber-500/30" style={{ height: 8 + (i % 4) * 4 }} />
                         ))}
                       </div>
-                      <span className="text-xs text-amber-400 animate-pulse">Generating via MusicGen…</span>
+                      <span className="text-xs text-amber-400 animate-pulse">Generating via SynthSound…</span>
                     </div>
                   )}
 

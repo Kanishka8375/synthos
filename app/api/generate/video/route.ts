@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
+const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
+
+export const maxDuration = 120;
+
+const T2V_MODELS: Record<string, string> = {
+  "zeroscope":   "cerspense/zeroscope_v2_576w",
+  "modelscope":  "damo-vilab/text-to-video-ms-1.7b",
+  "animatediff": "guoyww/animatediff-motion-adapter-v1-5-2",
+};
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -9,61 +17,68 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { prompt, model = "wan", duration = 4, aspectRatio = "16:9", project_id } = body as {
+  const {
+    prompt,
+    model = "zeroscope",
+    num_frames = 24,
+    fps = 8,
+    project_id,
+  } = body as {
     prompt: string;
     model?: string;
-    duration?: number;
-    aspectRatio?: string;
+    num_frames?: number;
+    fps?: number;
     project_id?: string;
   };
 
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
-  if (!POLLINATIONS_KEY) return NextResponse.json({ error: "POLLINATIONS_API_KEY not configured" }, { status: 503 });
+  if (!HF_TOKEN) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 503 });
 
-  const encoded = encodeURIComponent(`cinematic, high quality, fluid animation, 8K: ${prompt}`);
-  const videoUrl =
-    `https://gen.pollinations.ai/video/${encoded}` +
-    `?model=${model}&duration=${duration}&aspectRatio=${encodeURIComponent(aspectRatio)}&nologo=true`;
+  const modelId = T2V_MODELS[model] ?? T2V_MODELS["zeroscope"];
+  const fullPrompt = `cinematic, high quality, smooth motion, 4K: ${prompt}`;
 
   try {
-    const pollinationsRes = await fetch(videoUrl, {
-      headers: { "Authorization": `Bearer ${POLLINATIONS_KEY}` },
+    const hfRes = await fetch(`https://api-inference.huggingface.co/models/${modelId}`, {
+      method: "POST",
+      headers: {
+        "Authorization":    `Bearer ${HF_TOKEN}`,
+        "Content-Type":     "application/json",
+        "x-wait-for-model": "true",
+      },
+      body: JSON.stringify({
+        inputs: fullPrompt,
+        parameters: { num_frames, fps },
+      }),
+      signal: AbortSignal.timeout(110_000),
     });
 
-    if (!pollinationsRes.ok) {
-      const text = await pollinationsRes.text().catch(() => "");
+    if (!hfRes.ok) {
+      const errText = await hfRes.text().catch(() => "");
       let parsed: Record<string, unknown> = {};
-      try { parsed = JSON.parse(text); } catch { /* raw text */ }
-
-      // Surface a user-friendly message for payment errors
-      if (pollinationsRes.status === 402) {
-        return NextResponse.json({
-          error: "Video generation requires Pollinations pollen balance. Top up at pollinations.ai or use a different video service.",
-          code: "INSUFFICIENT_BALANCE",
-        }, { status: 402 });
-      }
-
+      try { parsed = JSON.parse(errText); } catch { /* raw text */ }
       return NextResponse.json(
-        { error: `Video generation failed (${pollinationsRes.status}): ${(parsed as { error?: { message?: string } }).error?.message ?? text}` },
+        { error: `Video generation failed (${hfRes.status}): ${(parsed as { error?: string }).error ?? errText}` },
         { status: 502 }
       );
     }
 
+    // Fire-and-forget DB record
     supabase.from("generated_images").insert({
       user_id: user.id,
       project_id: project_id ?? null,
       prompt,
-      url: videoUrl,
+      url: `hf:${modelId}`,
     }).then(() => {});
 
-    return new Response(pollinationsRes.body, {
+    return new Response(hfRes.body, {
       headers: {
-        "Content-Type": pollinationsRes.headers.get("content-type") ?? "video/mp4",
+        "Content-Type":  hfRes.headers.get("content-type") ?? "video/mp4",
         "Cache-Control": "no-store",
+        "X-Model":       modelId,
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Video generation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Video generation failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

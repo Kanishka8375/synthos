@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Cpu } from "lucide-react";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 
 const FOOTER_LINKS: Record<string, Array<{ label: string; href: string; external?: boolean }>> = {
   Product: [
     { label: "Features",     href: "#features" },
     { label: "How it works", href: "#how-it-works" },
     { label: "Pricing",      href: "#pricing" },
-    { label: "Changelog",    href: "#changelog" },   // anchor to bottom of page / coming soon
+    { label: "Changelog",    href: "#changelog" },
   ],
   Studio: [
     { label: "Marketplace",  href: "/signup?plan=creator" },
@@ -29,13 +29,11 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <Cpu className="w-4 h-4 text-white" />
-              </div>
+              <SynthosLogo size={32} />
               <span className="text-lg font-bold gradient-text">SYNTHOS</span>
             </Link>
             <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
-              The AI-native production studio. Powered by OpenClaw Engine.
+              The AI-native production studio. Synthesize stories, ship scenes, scale everything.
             </p>
           </div>
 
@@ -73,7 +71,7 @@ export function Footer() {
             <Link href="/signup" className="text-gray-600 hover:text-white transition-colors">Privacy</Link>
             <Link href="/signup" className="text-gray-600 hover:text-white transition-colors">Terms</Link>
           </div>
-          <p>Powered by <span className="text-indigo-400">OpenClaw Engine</span></p>
+          <p>Built with <span className="text-indigo-400">Synthos AI Engine</span></p>
         </div>
       </div>
     </footer>

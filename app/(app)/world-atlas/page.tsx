@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { useToast } from "@/components/ui/toast";
 import { Globe2, Plus, Lock, Unlock, Sun, Moon, Sunrise, Sunset, Image as ImageIcon, Loader2, X, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -221,7 +221,7 @@ export default function WorldAtlasPage() {
                   />
                 </div>
                 <p className="text-xs text-indigo-400 flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5" /> AI background art generated automatically via Pollinations.ai
+                  <ImageIcon className="w-3.5 h-3.5" /> AI background art generated automatically via SynthRender
                 </p>
                 <button
                   onClick={createLocation} disabled={creating || !newName.trim()}
@@ -335,7 +335,7 @@ export default function WorldAtlasPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <OpenClawBadge label="Bible Keeper" size="sm" />
+                        <SynthosBadge label="Bible Keeper" size="sm" />
                         <button
                           onClick={() => deleteLocation(loc)}
                           disabled={deletingId === loc.id}

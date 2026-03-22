@@ -2,7 +2,7 @@ import { Cpu, Lock, Globe2, Workflow, Layers, Zap } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 
 const diffs = [
-  { icon: Cpu, title: "9-Agent AI Orchestra", description: "OpenClaw coordinates 9 specialized agents — Script, Storyboard, Voice, Music, Bible, Trend, Translation, Lip Sync, and Render — as a unified production pipeline.", color: "text-indigo-400 bg-indigo-500/10" },
+  { icon: Cpu, title: "9-Agent AI Orchestra", description: "Synthos AI coordinates 9 specialized agents — Script, Storyboard, Voice, Music, Bible, Trend, Translation, Lip Sync, and Render — as a unified production pipeline.", color: "text-indigo-400 bg-indigo-500/10" },
   { icon: Lock, title: "DNA-Locked Consistency", description: "Character DNA Vault and World Atlas lock every visual attribute so your protagonist looks identical in shot 1 and shot 10,000.", color: "text-pink-400 bg-pink-500/10" },
   { icon: Workflow, title: "Visual Workflow Canvas", description: "Node-based pipeline editor lets you customize your production flow, add custom agents, and inspect every step in real-time.", color: "text-violet-400 bg-violet-500/10" },
   { icon: Layers, title: "Emotion Choreography", description: "Per-scene control over facial animation, voice tone, music mood, and camera language — all synced to your story's emotional arc.", color: "text-cyan-400 bg-cyan-500/10" },

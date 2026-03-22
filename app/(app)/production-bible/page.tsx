@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { useToast } from "@/components/ui/toast";
 import type { BibleCategory } from "@/lib/types";
 import { Plus, Lock, Unlock, Cpu, Sparkles, ChevronDown, Wand2, Loader2, X, CheckCircle2, Trash2, BookOpen } from "lucide-react";
@@ -168,7 +168,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
         description="AI-maintained story lore and rules — saved to your account"
         actions={
           <div className="flex items-center gap-2">
-            <OpenClawBadge label="Bible Keeper · Llama-3.3-70B" />
+            <SynthosBadge label="Bible Keeper · Synthos LLM" />
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
@@ -194,7 +194,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="text-base font-semibold text-white">New Bible Entry</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">AI-generated via Llama-3.3-70B · auto-saved</p>
+                  <p className="text-xs text-gray-500 mt-0.5">AI-generated via Synthos LLM · auto-saved</p>
                 </div>
                 <button onClick={() => { setShowModal(false); setGenError(""); }} className="text-gray-500 hover:text-white">
                   <X className="w-4 h-4" />
@@ -236,7 +236,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
                   className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all"
                 >
                   {generating
-                    ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Writing with Llama…</span>
+                    ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Writing with Synthos AI…</span>
                     : <span className="flex items-center justify-center gap-2"><Wand2 className="w-4 h-4" /> Generate & Save Entry</span>
                   }
                 </button>
@@ -356,7 +356,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
                           <div className="px-5 pb-4">
                             <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
                             <div className="flex items-center gap-2 mt-3 flex-wrap">
-                              {entry.ai_generated && <OpenClawBadge label="Auto-generated" size="sm" />}
+                              {entry.ai_generated && <SynthosBadge label="Auto-generated" size="sm" />}
                               {entry.locked && (
                                 <span className="flex items-center gap-1 text-[10px] text-indigo-400">
                                   <Cpu className="w-3 h-3" /> Enforced by Bible Keeper

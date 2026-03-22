@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
-import { OpenClawMetricsBar } from "@/components/ui/openclaw-metrics-bar";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
+import { SynthosMetricsBar } from "@/components/ui/openclaw-metrics-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MOCK_RENDER_JOBS } from "@/lib/mock-data";
-import { OPENCLAW_SUMMARY } from "@/lib/openclaw";
+import { SYNTHOS_SUMMARY } from "@/lib/openclaw";
 import {
   FolderOpen, Film, Cpu, Users, ArrowRight, Zap, Clock,
   Image as ImageIcon, FileText, Music2, Sparkles, Plus,
@@ -42,9 +42,9 @@ export default function DashboardPage() {
 
   const realStats = userStats ? [
     { label: "Projects",    value: userStats.projects, icon: FolderOpen, sub: "Total projects",        color: "text-indigo-400 bg-indigo-500/10" },
-    { label: "Images",      value: userStats.images,   icon: ImageIcon,  sub: "Via Pollinations",      color: "text-pink-400   bg-pink-500/10"   },
-    { label: "Scripts",     value: userStats.scripts,  icon: FileText,   sub: "Via Llama 3.3-70B",    color: "text-violet-400 bg-violet-500/10" },
-    { label: "Music Tracks",value: userStats.tracks,   icon: Music2,     sub: "Via MusicGen",          color: "text-cyan-400   bg-cyan-500/10"   },
+    { label: "Images",      value: userStats.images,   icon: ImageIcon,  sub: "Via SynthRender",       color: "text-pink-400   bg-pink-500/10"   },
+    { label: "Scripts",     value: userStats.scripts,  icon: FileText,   sub: "Via Synthos LLM",       color: "text-violet-400 bg-violet-500/10" },
+    { label: "Music Tracks",value: userStats.tracks,   icon: Music2,     sub: "Via SynthSound",        color: "text-cyan-400   bg-cyan-500/10"   },
   ] : [
     { label: "Projects",    value: 0, icon: FolderOpen, sub: "—", color: "text-indigo-400 bg-indigo-500/10" },
     { label: "Images",      value: 0, icon: ImageIcon,  sub: "—", color: "text-pink-400   bg-pink-500/10"   },
@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
       <div className="p-5 space-y-5">
 
-        {/* ── OpenClaw Engine ──────────────────────────────────────── */}
+        {/* ── Synthos AI Engine ──────────────────────────────────────── */}
         <div className="glass rounded-2xl p-4 border border-indigo-500/20 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-transparent pointer-events-none" />
           <div className="relative flex items-center justify-between flex-wrap gap-4">
@@ -83,14 +83,14 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-semibold text-white text-sm">OpenClaw Engine</p>
-                  <OpenClawBadge label="Active" />
+                  <p className="font-semibold text-white text-sm">Synthos AI Engine</p>
+                  <SynthosBadge label="Active" />
                 </div>
-                <OpenClawMetricsBar metrics={[
-                  { label: "Active agents", value: OPENCLAW_SUMMARY.activeAgents },
-                  { label: "Tasks running", value: OPENCLAW_SUMMARY.totalTasksRunning },
-                  { label: "Accuracy",      value: OPENCLAW_SUMMARY.avgAccuracy,   unit: "%" },
-                  { label: "Uptime",        value: OPENCLAW_SUMMARY.avgUptime,     unit: "%", color: "text-emerald-400" },
+                <SynthosMetricsBar metrics={[
+                  { label: "Active agents", value: SYNTHOS_SUMMARY.activeAgents },
+                  { label: "Tasks running", value: SYNTHOS_SUMMARY.totalTasksRunning },
+                  { label: "Accuracy",      value: SYNTHOS_SUMMARY.avgAccuracy,   unit: "%" },
+                  { label: "Uptime",        value: SYNTHOS_SUMMARY.avgUptime,     unit: "%", color: "text-emerald-400" },
                 ]} />
               </div>
             </div>
@@ -192,8 +192,8 @@ export default function DashboardPage() {
             <div className="divide-y divide-white/5">
               {[
                 { title: "Create",            sub: "Image · Video · Music generation",          href: "/create",           icon: Sparkles, gradient: "from-indigo-500/30 to-violet-500/30",  badge: "New",    badgeClass: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" },
-                { title: "Soundtrack Forge",  sub: "Generate music with MusicGen",              href: "/soundtrack-forge", icon: Music2,   gradient: "from-cyan-500/20 to-teal-500/20",      badge: "AI",     badgeClass: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
-                { title: "Episode Pipeline",  sub: "Write scripts with Llama 3.3-70B",          href: "/episode-pipeline", icon: Film,     gradient: "from-violet-500/20 to-purple-500/20",  badge: "AI",     badgeClass: "bg-violet-500/20 text-violet-300 border-violet-500/30" },
+                { title: "Soundtrack Forge",  sub: "Generate music with SynthSound",            href: "/soundtrack-forge", icon: Music2,   gradient: "from-cyan-500/20 to-teal-500/20",      badge: "AI",     badgeClass: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
+                { title: "Episode Pipeline",  sub: "Write scripts with Synthos LLM",            href: "/episode-pipeline", icon: Film,     gradient: "from-violet-500/20 to-purple-500/20",  badge: "AI",     badgeClass: "bg-violet-500/20 text-violet-300 border-violet-500/30" },
                 { title: "Character DNA Vault",sub: "Build consistent AI characters",           href: "/character-dna-vault", icon: Users,  gradient: "from-pink-500/20 to-rose-500/20",     badge: "AI",     badgeClass: "bg-pink-500/20 text-pink-300 border-pink-500/30" },
               ].map((p) => (
                 <Link

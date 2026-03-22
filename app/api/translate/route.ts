@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!OPENROUTER_KEY) return NextResponse.json({ error: "OpenRouter not configured" }, { status: 500 });
+  if (!OPENROUTER_KEY) return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
 
   const { text, targetLanguage, targetCode } = await request.json() as {
     text: string;
@@ -46,7 +46,7 @@ Return ONLY the translated text — no explanations, no notes.`;
 
     if (!res.ok) {
       const err = await res.text().catch(() => "");
-      return NextResponse.json({ error: `OpenRouter error: ${err}` }, { status: 502 });
+      return NextResponse.json({ error: `AI service error: ${err}` }, { status: 502 });
     }
 
     const data = await res.json();

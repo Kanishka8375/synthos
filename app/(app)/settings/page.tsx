@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { Bell, Key, Download, Trash2, User, Shield, ChevronRight, Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -211,7 +211,7 @@ export default function SettingsPage() {
           <div className="space-y-3">
             {[
               { key: "renderComplete" as const, label: "Render complete",  desc: "Notify when a render job finishes" },
-              { key: "agentAlerts"    as const, label: "Agent alerts",     desc: "OpenClaw agent errors or warnings" },
+              { key: "agentAlerts"    as const, label: "Agent alerts",     desc: "Synthos AI agent errors or warnings" },
               { key: "trendAlerts"    as const, label: "Trend alerts",     desc: "High-relevance trends for your projects" },
               { key: "weeklyDigest"   as const, label: "Weekly digest",    desc: "Summary of production activity" },
               { key: "billingAlerts"  as const, label: "Billing alerts",   desc: "Usage limits and payment notifications" },
@@ -232,32 +232,32 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* API Key (HuggingFace info) */}
+        {/* AI Services */}
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-4 h-4 text-indigo-400" />
             <h2 className="text-sm font-semibold text-white">AI Services</h2>
-            <OpenClawBadge label="OpenRouter + HuggingFace + Pollinations" size="sm" />
+            <SynthosBadge label="Synthos AI Stack" size="sm" />
           </div>
           <div className="space-y-3 text-xs text-gray-400">
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
-                <p className="text-white font-medium">OpenRouter</p>
-                <p className="text-gray-500 mt-0.5">Llama-3.3-70B — scripts, lore, ideas</p>
+                <p className="text-white font-medium">Synthos LLM</p>
+                <p className="text-gray-500 mt-0.5">Synthos LLM — scripts, lore, ideas</p>
               </div>
               <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Configured</span>
             </div>
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
-                <p className="text-white font-medium">Pollinations.ai</p>
+                <p className="text-white font-medium">SynthRender</p>
                 <p className="text-gray-500 mt-0.5">Image generation — flux model · storyboards</p>
               </div>
               <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Configured</span>
             </div>
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
-                <p className="text-white font-medium">HuggingFace Inference</p>
-                <p className="text-gray-500 mt-0.5">MusicGen (audio) · Video generation</p>
+                <p className="text-white font-medium">Synthos SynthSound</p>
+                <p className="text-gray-500 mt-0.5">SynthSound (audio) · Video generation</p>
               </div>
               <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Configured

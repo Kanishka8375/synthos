@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { Waves } from "lucide-react";
 
 const MARKERS = [
@@ -73,7 +73,7 @@ export default function EmotionChoreographyPage() {
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-white">Scene Timeline — EP 3: Blade of Regret</h2>
-            <OpenClawBadge label="Voice Synthesizer" size="sm" />
+            <SynthosBadge label="Voice Synthesizer" size="sm" />
           </div>
 
           {/* Timeline bar */}

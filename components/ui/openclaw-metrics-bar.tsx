@@ -5,11 +5,11 @@ interface Metric {
   color?: string;
 }
 
-interface OpenClawMetricsBarProps {
+interface SynthosMetricsBarProps {
   metrics: Metric[];
 }
 
-export function OpenClawMetricsBar({ metrics }: OpenClawMetricsBarProps) {
+export function SynthosMetricsBar({ metrics }: SynthosMetricsBarProps) {
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {metrics.map((m, i) => (
@@ -23,3 +23,6 @@ export function OpenClawMetricsBar({ metrics }: OpenClawMetricsBarProps) {
     </div>
   );
 }
+
+/** @deprecated use SynthosMetricsBar */
+export const OpenClawMetricsBar = SynthosMetricsBar;

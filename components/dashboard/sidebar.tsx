@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Cpu, LogOut, ChevronLeft, Sparkles } from "lucide-react";
+import { LogOut, ChevronLeft, Sparkles } from "lucide-react";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 import { useState } from "react";
 import { NAV_SECTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
@@ -28,8 +29,8 @@ export function Sidebar() {
     )}>
       {/* Logo */}
       <div className={clsx("h-14 flex items-center border-b border-white/8 px-3", collapsed ? "justify-center" : "gap-2.5")}>
-        <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-pink-500 rounded-lg flex items-center justify-center shrink-0">
-          <Cpu className="w-4 h-4 text-white" />
+        <div className="w-7 h-7 rounded-lg overflow-hidden shrink-0">
+          <SynthosLogo size={28} />
         </div>
         {!collapsed && <span className="font-bold text-base gradient-text">SYNTHOS</span>}
       </div>

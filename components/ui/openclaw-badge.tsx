@@ -1,13 +1,13 @@
-import { Cpu } from "lucide-react";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 import clsx from "clsx";
 
-interface OpenClawBadgeProps {
+interface SynthosBadgeProps {
   label?: string;
   size?: "sm" | "md";
   active?: boolean;
 }
 
-export function OpenClawBadge({ label = "OpenClaw", size = "md", active = true }: OpenClawBadgeProps) {
+export function SynthosBadge({ label = "Synthos AI", size = "md", active = true }: SynthosBadgeProps) {
   return (
     <span className={clsx(
       "inline-flex items-center gap-1.5 rounded-full font-medium border",
@@ -16,9 +16,12 @@ export function OpenClawBadge({ label = "OpenClaw", size = "md", active = true }
         : "bg-gray-500/10 text-gray-500 border-gray-500/20",
       size === "sm" ? "text-xs px-2 py-0.5" : "text-xs px-2.5 py-1"
     )}>
-      <Cpu className={size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} />
+      <SynthosLogo size={size === "sm" ? 12 : 14} />
       {label}
       {active && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />}
     </span>
   );
 }
+
+/** @deprecated use SynthosBadge */
+export const OpenClawBadge = SynthosBadge;

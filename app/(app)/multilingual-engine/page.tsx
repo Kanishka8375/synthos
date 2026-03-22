@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/components/ui/toast";
 import { MOCK_LANGUAGES } from "@/lib/mock-data";
@@ -103,7 +103,7 @@ export default function MultilingualEnginePage() {
     <div>
       <DashHeader
         title="Multilingual Engine"
-        description={`AI dubbing and lip sync · Llama 3.3-70B · ${languages.length}+ languages`}
+        description={`AI dubbing and lip sync · Synthos LLM · ${languages.length}+ languages`}
       />
       <div className="p-5 space-y-5">
 
@@ -136,7 +136,7 @@ export default function MultilingualEnginePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-white">{agent.label}</p>
-                    <OpenClawBadge label={agent.active ? "Running" : "Standby"} size="sm" active={agent.active} />
+                    <SynthosBadge label={agent.active ? "Running" : "Standby"} size="sm" active={agent.active} />
                   </div>
                   <p className="text-xs text-gray-500">{agent.desc}</p>
                 </div>
@@ -155,7 +155,7 @@ export default function MultilingualEnginePage() {
             <div>
               <h2 className="text-sm font-semibold text-white">Language Queue</h2>
               {processingCount > 0 && (
-                <p className="text-xs text-indigo-400 mt-0.5">{processingCount} translating via Llama 3.3-70B…</p>
+                <p className="text-xs text-indigo-400 mt-0.5">{processingCount} translating via Synthos LLM…</p>
               )}
             </div>
             <button

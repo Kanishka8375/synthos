@@ -1,6 +1,6 @@
 import type { OpenClawAgent } from "./types";
 
-export const OPENCLAW_AGENTS_DATA: OpenClawAgent[] = [
+export const SYNTHOS_AGENTS_DATA: OpenClawAgent[] = [
   { id: "script", name: "Script Writer", role: "Generates scene scripts & dialogue from prompts", accuracy: 94, consistency: 91, speed: 87, active: true, tasksRunning: 3, tasksCompleted: 1842, uptime: 99.8 },
   { id: "storyboard", name: "Storyboard Agent", role: "Converts scripts into visual shot sequences", accuracy: 89, consistency: 93, speed: 82, active: true, tasksRunning: 2, tasksCompleted: 1104, uptime: 99.5 },
   { id: "voice", name: "Voice Synthesizer", role: "Clones and generates character voices", accuracy: 96, consistency: 94, speed: 91, active: true, tasksRunning: 5, tasksCompleted: 3211, uptime: 99.9 },
@@ -12,10 +12,15 @@ export const OPENCLAW_AGENTS_DATA: OpenClawAgent[] = [
   { id: "render", name: "Render Optimizer", role: "Schedules and optimizes GPU render jobs", accuracy: 99, consistency: 97, speed: 93, active: true, tasksRunning: 7, tasksCompleted: 5821, uptime: 99.9 },
 ];
 
-export const OPENCLAW_SUMMARY = {
-  activeAgents: OPENCLAW_AGENTS_DATA.filter(a => a.active).length,
-  totalTasksRunning: OPENCLAW_AGENTS_DATA.reduce((s, a) => s + a.tasksRunning, 0),
-  totalTasksCompleted: OPENCLAW_AGENTS_DATA.reduce((s, a) => s + a.tasksCompleted, 0),
-  avgAccuracy: Math.round(OPENCLAW_AGENTS_DATA.reduce((s, a) => s + a.accuracy, 0) / OPENCLAW_AGENTS_DATA.length),
-  avgUptime: parseFloat((OPENCLAW_AGENTS_DATA.reduce((s, a) => s + a.uptime, 0) / OPENCLAW_AGENTS_DATA.length).toFixed(1)),
+export const SYNTHOS_SUMMARY = {
+  activeAgents: SYNTHOS_AGENTS_DATA.filter(a => a.active).length,
+  totalTasksRunning: SYNTHOS_AGENTS_DATA.reduce((s, a) => s + a.tasksRunning, 0),
+  totalTasksCompleted: SYNTHOS_AGENTS_DATA.reduce((s, a) => s + a.tasksCompleted, 0),
+  avgAccuracy: Math.round(SYNTHOS_AGENTS_DATA.reduce((s, a) => s + a.accuracy, 0) / SYNTHOS_AGENTS_DATA.length),
+  avgUptime: parseFloat((SYNTHOS_AGENTS_DATA.reduce((s, a) => s + a.uptime, 0) / SYNTHOS_AGENTS_DATA.length).toFixed(1)),
 };
+
+/** @deprecated use SYNTHOS_AGENTS_DATA */
+export const OPENCLAW_AGENTS_DATA = SYNTHOS_AGENTS_DATA;
+/** @deprecated use SYNTHOS_SUMMARY */
+export const OPENCLAW_SUMMARY = SYNTHOS_SUMMARY;

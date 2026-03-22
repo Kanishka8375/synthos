@@ -1,10 +1,10 @@
 import { FileText, Image, Users, Waves, Music2, Globe2, TrendingUp, Cpu } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 
 const features = [
   { icon: FileText, title: "Script Writer", description: "Generate full episode scripts from a brief. Control tone, pacing, genre, and character voice — all aligned with your Production Bible.", agent: "Script Writer" },
-  { icon: Image, title: "AnimeDiffusion", description: "Proprietary diffusion model fine-tuned for anime and cinematic animation. Consistent style across every frame, every episode.", agent: "Render Optimizer" },
+  { icon: Image, title: "SynthRender", description: "Proprietary diffusion model fine-tuned for anime and cinematic animation. Consistent style across every frame, every episode.", agent: "Render Optimizer" },
   { icon: Users, title: "Character DNA Vault", description: "Lock character appearance, personality, voice, and emotional range into permanent DNA profiles that carry across your entire series.", agent: "Bible Keeper" },
   { icon: Waves, title: "Emotion Choreography", description: "Map your story's emotional arc to facial animation, voice tone, music, and camera movement — scene by scene, shot by shot.", agent: "Voice Synthesizer" },
   { icon: Music2, title: "Soundtrack Forge", description: "AI music composition that adapts to scene mood, pacing, and emotion. Original scores generated per episode, never repeated.", agent: "Music Composer" },
@@ -21,7 +21,7 @@ export function Features() {
           eyebrow="Core features"
           title="8 pillars of the"
           highlight="AI production studio"
-          subtitle="Each feature is powered by a dedicated OpenClaw agent — specialized, fast, and designed to work together."
+          subtitle="Each feature is powered by a dedicated Synthos AI agent — specialized, fast, and designed to work together."
         />
 
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -32,7 +32,7 @@ export function Features() {
               </div>
               <h3 className="font-semibold text-white mb-2">{f.title}</h3>
               <p className="text-sm text-gray-400 leading-relaxed flex-1 mb-4">{f.description}</p>
-              <OpenClawBadge label={f.agent} size="sm" />
+              <SynthosBadge label={f.agent} size="sm" />
             </div>
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { Plus, Lock, Unlock, ChevronDown, Image as ImageIcon, Loader2, Wand2, X, User, Trash2 } from "lucide-react";
 
 interface Character {
@@ -216,7 +216,7 @@ Keep it mysterious, dramatic, and fitting for a ${char.role} character.`,
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none" />
               </div>
               <p className="text-xs text-indigo-400 flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5" /> AI portrait will be generated automatically via Pollinations.ai
+                <ImageIcon className="w-3.5 h-3.5" /> AI portrait will be generated automatically via SynthRender
               </p>
               <button onClick={createCharacter} disabled={creating || !newName.trim()}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all">
@@ -359,7 +359,7 @@ Keep it mysterious, dramatic, and fitting for a ${char.role} character.`,
                 ))}
 
                 <div className="px-5 pb-4 flex items-center gap-2">
-                  <OpenClawBadge label="Bible Keeper" size="sm" />
+                  <SynthosBadge label="Bible Keeper" size="sm" />
                   {char.memory_locked && (
                     <span className="text-[10px] text-gray-600">Memory locked · Consistent across all episodes</span>
                   )}

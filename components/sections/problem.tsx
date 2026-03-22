@@ -62,7 +62,7 @@ export function Problem() {
               {[
                 "Script → Storyboard → Animation → Audio → Export in one pipeline",
                 "Character DNA Vault keeps every character consistent across every shot",
-                "OpenClaw Music Composer scores every scene adaptively",
+                "Synthos AI Music Composer scores every scene adaptively",
                 "Bible Keeper enforces lore, rules, and timeline consistency",
                 "One-click multilingual dubbing with frame-accurate lip sync",
               ].map((point) => (

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { DashHeader } from "@/components/dashboard/header";
-import { OpenClawBadge } from "@/components/ui/openclaw-badge";
+import { SynthosBadge } from "@/components/ui/openclaw-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ProjectStatus } from "@/lib/types";
 import { Film, Plus, Search, Grid3X3, List, MoreHorizontal, Loader2, Image as ImageIcon, X } from "lucide-react";
@@ -269,7 +269,7 @@ export default function ProjectsPage() {
                         <Film className="w-10 h-10 text-indigo-500/40" />
                       )}
                       <div className="absolute top-3 right-3 flex items-center gap-2">
-                        {p.openclaw_enabled && <OpenClawBadge size="sm" label="AI" />}
+                        {p.openclaw_enabled && <SynthosBadge size="sm" label="AI" />}
                         <div className="relative">
                           <button
                             onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === p.id ? null : p.id); }}
@@ -330,7 +330,7 @@ export default function ProjectsPage() {
                       <p className="text-xs text-gray-500">{p.genre} · {p.style} · {p.episode_count} eps · Updated {formatDate(p.updated_at)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {p.openclaw_enabled && <OpenClawBadge size="sm" label="AI" />}
+                      {p.openclaw_enabled && <SynthosBadge size="sm" label="AI" />}
                       <StatusBadge status={p.status} />
                       <button
                         onClick={() => generateThumbnail(p)}

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Search, X, Cpu } from "lucide-react";
+import { Bell, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useChatPanel } from "@/components/ui/openclaw-chat";
+import { SynthosLogo } from "@/components/ui/synthos-logo";
 
 interface DashHeaderProps {
   title: string;
@@ -66,13 +67,13 @@ export function DashHeader({ title, description, actions }: DashHeaderProps) {
           </button>
         )}
 
-        {/* Ask OpenClaw — opens the real AI chat panel */}
+        {/* Ask Synthos AI — opens the real AI chat panel */}
         <button
           onClick={chat.open}
           className="hidden sm:flex items-center gap-1.5 glass glass-hover rounded-lg px-2.5 py-1.5 text-xs text-gray-500 hover:text-white transition-colors"
         >
-          <Cpu className="w-3.5 h-3.5 text-indigo-400" />
-          Ask OpenClaw
+          <SynthosLogo size={14} />
+          Ask Synthos AI
           <kbd className="text-[10px] bg-white/8 px-1 py-0.5 rounded text-gray-600">⌘K</kbd>
         </button>
 
