@@ -276,8 +276,14 @@ export function SynthosChatProvider({ children }: { children: ReactNode }) {
 function ChatBubble({ msg }: { msg: Msg }) {
   const isUser = msg.role === "user";
 
-  // Very simple markdown: bold, newlines
-  const formatted = msg.content
+  // Escape HTML first to prevent XSS, then apply safe markdown: bold, newlines
+  const escaped = msg.content
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  const formatted = escaped
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\n/g, "<br/>");
 

@@ -1,10 +1,13 @@
+import { useId } from "react";
+
 interface SynthosLogoProps {
   size?: number;
   className?: string;
 }
 
 export function SynthosLogo({ size = 32, className }: SynthosLogoProps) {
-  const id = "sl";
+  const uid = useId();
+  const id = uid.replace(/:/g, "");
   return (
     <svg
       width={size}
