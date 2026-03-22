@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -30,7 +30,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protected app routes — redirect to login if not authenticated
-  const isAppRoute = pathname.startsWith("/dashboard") ||
+  const isAppRoute =
+    pathname.startsWith("/dashboard") ||
     pathname.startsWith("/projects") ||
     pathname.startsWith("/episode-pipeline") ||
     pathname.startsWith("/render-queue") ||
@@ -44,7 +45,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/trend-radar") ||
     pathname.startsWith("/marketplace") ||
     pathname.startsWith("/billing") ||
-    pathname.startsWith("/settings");
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/create");
 
   if (isAppRoute && !user) {
     const url = request.nextUrl.clone();

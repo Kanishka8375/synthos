@@ -197,6 +197,7 @@ export interface Language {
   lipSync: number;
   status: "Pending" | "Processing" | "Complete" | "Error";
   progress: number;
+  translated?: string;
 }
 
 // ─── OpenClaw Agent ───────────────────────────────────────────────────────────

@@ -1,10 +1,16 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { ToastProvider } from "@/components/ui/toast";
+import { OpenClawChatProvider } from "@/components/ui/openclaw-chat";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-[#07070f]">
-      <Sidebar />
-      <main className="flex-1 overflow-auto min-w-0">{children}</main>
-    </div>
+    <ToastProvider>
+      <OpenClawChatProvider>
+        <div className="flex min-h-screen bg-[#07070f]">
+          <Sidebar />
+          <main className="flex-1 overflow-auto min-w-0">{children}</main>
+        </div>
+      </OpenClawChatProvider>
+    </ToastProvider>
   );
 }
