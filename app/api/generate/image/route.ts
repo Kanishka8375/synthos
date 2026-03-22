@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
+
+function buildImageUrl(prompt: string, width: number, height: number, seed: number): string {
+  const encoded = encodeURIComponent(`anime style, high quality, detailed: ${prompt}`);
+  return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -10,33 +17,26 @@ export async function POST(request: NextRequest) {
   const { prompt, project_id, width = 768, height = 512 } = body;
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
-  // Pollinations.ai — completely free, no API key, no rate limit
-  const encodedPrompt = encodeURIComponent(
-    `anime style, high quality, detailed: ${prompt}`
-  );
   const seed = Math.floor(Math.random() * 999999);
-  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`;
+  const url = buildImageUrl(prompt, width, height, seed);
 
-  // Verify the image is reachable (Pollinations generates on-demand)
+  const headers: Record<string, string> = {};
+  if (POLLINATIONS_KEY) headers["Authorization"] = `Bearer ${POLLINATIONS_KEY}`;
+
   try {
-    const check = await fetch(url, { method: "HEAD" });
+    const check = await fetch(url, { method: "HEAD", headers });
     if (!check.ok) throw new Error("Image generation failed");
   } catch {
     return NextResponse.json({ error: "Image generation service unavailable" }, { status: 502 });
   }
 
-  // Save to Supabase
   const { data, error } = await supabase
     .from("generated_images")
     .insert({ user_id: user.id, project_id: project_id ?? null, prompt, url })
     .select()
     .single();
 
-  if (error) {
-    // If DB save fails, still return the URL
-    return NextResponse.json({ url, saved: false });
-  }
-
+  if (error) return NextResponse.json({ url, saved: false });
   return NextResponse.json({ url, id: data.id, saved: true });
 }
 

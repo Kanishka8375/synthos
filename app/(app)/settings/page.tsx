@@ -250,9 +250,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
                 <p className="text-white font-medium">Pollinations.ai</p>
-                <p className="text-gray-500 mt-0.5">Image generation — no key required</p>
+                <p className="text-gray-500 mt-0.5">Image generation — flux model · storyboards</p>
               </div>
-              <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>
+              <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Configured</span>
             </div>
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
