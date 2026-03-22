@@ -120,3 +120,23 @@ create table if not exists public.bible_entries (
 );
 alter table public.bible_entries enable row level security;
 create policy "Users can CRUD own bible entries" on public.bible_entries for all using (auth.uid() = user_id);
+
+-- Characters table (Character DNA Vault)
+create table if not exists public.characters (
+  id             uuid default gen_random_uuid() primary key,
+  user_id        uuid references auth.users on delete cascade not null,
+  name           text not null,
+  role           text not null default 'Supporting',
+  emotion_profile text,
+  voice_type     text,
+  description    text,
+  appearance     text,
+  personality    text,
+  portrait_url   text,
+  backstory      text,
+  memory_locked  boolean default false,
+  avatar_color   text default 'from-indigo-500 to-violet-500',
+  created_at     timestamptz default now()
+);
+alter table public.characters enable row level security;
+create policy "Users can CRUD own characters" on public.characters for all using (auth.uid() = user_id);

@@ -1,46 +1,81 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashHeader } from "@/components/dashboard/header";
 import { OpenClawBadge } from "@/components/ui/openclaw-badge";
-import { MOCK_CHARACTERS } from "@/lib/mock-data";
-import type { Character } from "@/lib/types";
-import { Plus, Lock, Unlock, ChevronDown, Image as ImageIcon, Loader2, Wand2, X, User } from "lucide-react";
+import { Plus, Lock, Unlock, ChevronDown, Image as ImageIcon, Loader2, Wand2, X, User, Trash2 } from "lucide-react";
 
-interface RichCharacter extends Character {
+interface Character {
+  id: string;
+  name: string;
+  role: string;
+  emotion_profile: string;
+  voice_type: string;
+  description: string;
+  appearance: string;
+  personality: string;
   portrait_url?: string;
   backstory?: string;
+  memory_locked: boolean;
+  avatar_color: string;
 }
 
 const EMOTION_PROFILES = ["Stoic", "Energetic", "Melancholic", "Cheerful", "Cold", "Passionate", "Mysterious", "Gentle"];
 const VOICE_TYPES = ["Deep Baritone", "Soft Soprano", "Husky Alto", "Clear Tenor", "Raspy Bass", "Bright Mezzo"];
 const ROLES = ["Protagonist", "Antagonist", "Supporting", "Mentor", "Anti-hero", "Comic Relief", "Love Interest"];
+const AVATAR_COLORS = [
+  "from-indigo-500 to-violet-500",
+  "from-pink-500 to-rose-500",
+  "from-cyan-500 to-teal-500",
+  "from-amber-500 to-orange-500",
+  "from-emerald-500 to-green-500",
+];
 
 export default function CharacterDnaVaultPage() {
-  const [characters, setCharacters]         = useState<RichCharacter[]>(MOCK_CHARACTERS);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [loading, setLoading] = useState(true);
   const [generatingPortrait, setGeneratingPortrait] = useState<string | null>(null);
   const [generatingBackstory, setGeneratingBackstory] = useState<string | null>(null);
   const [expandedBackstory, setExpandedBackstory] = useState<string | null>(null);
 
-  // New character modal
-  const [showModal, setShowModal]   = useState(false);
-  const [creating, setCreating]     = useState(false);
-  const [newName, setNewName]       = useState("");
-  const [newRole, setNewRole]       = useState("Protagonist");
+  const [showModal, setShowModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newRole, setNewRole] = useState("Protagonist");
   const [newEmotion, setNewEmotion] = useState("Stoic");
-  const [newVoice, setNewVoice]     = useState("Clear Tenor");
-  const [newDesc, setNewDesc]       = useState("");
+  const [newVoice, setNewVoice] = useState("Clear Tenor");
+  const [newDesc, setNewDesc] = useState("");
 
-  const toggleLock = (id: string) =>
-    setCharacters(prev => prev.map(c => c.id === id ? { ...c, memoryLocked: !c.memoryLocked } : c));
+  useEffect(() => {
+    fetch("/api/characters")
+      .then(r => r.json())
+      .then(d => setCharacters(d.characters ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
-  const generatePortrait = async (char: RichCharacter) => {
+  const toggleLock = async (char: Character) => {
+    const updated = { ...char, memory_locked: !char.memory_locked };
+    setCharacters(prev => prev.map(c => c.id === char.id ? updated : c));
+    await fetch(`/api/characters/${char.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memory_locked: updated.memory_locked }),
+    });
+  };
+
+  const deleteCharacter = async (id: string) => {
+    setCharacters(prev => prev.filter(c => c.id !== id));
+    await fetch(`/api/characters/${id}`, { method: "DELETE" });
+  };
+
+  const generatePortrait = async (char: Character) => {
     setGeneratingPortrait(char.id);
     try {
       const res = await fetch("/api/generate/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `${char.name}, ${char.role}, anime character portrait, ${char.appearance}, ${char.emotionProfile} expression, detailed face, close-up, studio lighting`,
+          prompt: `${char.name}, ${char.role}, anime character portrait, ${char.appearance}, ${char.emotion_profile} expression, detailed face, close-up, studio lighting`,
           width: 512,
           height: 512,
         }),
@@ -48,12 +83,17 @@ export default function CharacterDnaVaultPage() {
       const data = await res.json();
       if (data.url) {
         setCharacters(prev => prev.map(c => c.id === char.id ? { ...c, portrait_url: data.url } : c));
+        await fetch(`/api/characters/${char.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ portrait_url: data.url }),
+        });
       }
     } catch { /* silent */ }
     finally { setGeneratingPortrait(null); }
   };
 
-  const generateBackstory = async (char: RichCharacter) => {
+  const generateBackstory = async (char: Character) => {
     setGeneratingBackstory(char.id);
     try {
       const res = await fetch("/api/generate/script", {
@@ -74,6 +114,11 @@ Keep it mysterious, dramatic, and fitting for a ${char.role} character.`,
       if (data.content) {
         setCharacters(prev => prev.map(c => c.id === char.id ? { ...c, backstory: data.content } : c));
         setExpandedBackstory(char.id);
+        await fetch(`/api/characters/${char.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backstory: data.content }),
+        });
       }
     } catch { /* silent */ }
     finally { setGeneratingBackstory(null); }
@@ -82,25 +127,33 @@ Keep it mysterious, dramatic, and fitting for a ${char.role} character.`,
   const createCharacter = async () => {
     if (!newName.trim()) return;
     setCreating(true);
-    const newChar: RichCharacter = {
-      id: `char-${Date.now()}`,
-      name: newName.trim(),
-      role: newRole,
-      emotionProfile: newEmotion,
-      voiceType: newVoice,
-      description: newDesc || `${newRole} character with ${newEmotion.toLowerCase()} disposition.`,
-      appearance: `${newEmotion} anime character`,
-      personality: newDesc || `A ${newRole.toLowerCase()} with a ${newEmotion.toLowerCase()} personality.`,
-      consistency: 100,
-      memoryLocked: false,
-      avatarColor: "from-indigo-500 to-violet-500",
-    };
-    setCharacters(prev => [newChar, ...prev]);
-    setShowModal(false);
-    setNewName(""); setNewDesc("");
-    setCreating(false);
-    // Auto-generate portrait
-    await generatePortrait(newChar);
+    try {
+      const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+      const res = await fetch("/api/characters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          role: newRole,
+          emotion_profile: newEmotion,
+          voice_type: newVoice,
+          description: newDesc || `${newRole} character with ${newEmotion.toLowerCase()} disposition.`,
+          appearance: `${newEmotion} anime character, ${newDesc || "detailed design"}`,
+          personality: newDesc || `A ${newRole.toLowerCase()} with a ${newEmotion.toLowerCase()} personality.`,
+          memory_locked: false,
+          avatar_color: avatarColor,
+        }),
+      });
+      const newChar = await res.json();
+      if (newChar.id) {
+        setCharacters(prev => [newChar, ...prev]);
+        setShowModal(false);
+        setNewName(""); setNewDesc("");
+        // Auto-generate portrait
+        await generatePortrait(newChar);
+      }
+    } catch { /* silent */ }
+    finally { setCreating(false); }
   };
 
   return (
@@ -174,139 +227,146 @@ Keep it mysterious, dramatic, and fitting for a ${char.role} character.`,
       )}
 
       <div className="p-5">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {characters.map((char) => (
-            <div key={char.id} className="glass rounded-2xl overflow-hidden">
-              {/* Header */}
-              <div className="flex items-start gap-4 p-5 border-b border-white/8">
-                {/* Portrait */}
-                <div className="relative shrink-0">
-                  {char.portrait_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={char.portrait_url} alt={char.name}
-                      className="w-16 h-16 rounded-2xl object-cover" />
-                  ) : (
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${char.avatarColor} flex items-center justify-center text-white text-xl font-bold`}>
-                      {char.name.split(" ").map(n => n[0]).join("")}
-                    </div>
-                  )}
-                  {generatingPortrait === char.id && (
-                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-white">{char.name}</h3>
-                      <p className="text-xs text-gray-500">{char.role}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-center">
-                        <div className="text-lg font-bold gradient-text">{char.consistency}%</div>
-                        <div className="text-[10px] text-gray-600">DNA Lock</div>
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[1, 2].map(i => (
+              <div key={i} className="glass rounded-2xl h-48 animate-pulse" />
+            ))}
+          </div>
+        ) : characters.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-16 h-16 bg-white/[0.04] rounded-2xl flex items-center justify-center">
+              <User className="w-8 h-8 text-gray-700" />
+            </div>
+            <p className="text-sm text-gray-500">No characters yet</p>
+            <button onClick={() => setShowModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 border border-indigo-500/30 rounded-xl text-xs text-indigo-400 hover:bg-indigo-600/30 transition-colors">
+              <Plus className="w-3.5 h-3.5" /> Create your first character
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {characters.map((char) => (
+              <div key={char.id} className="glass rounded-2xl overflow-hidden">
+                {/* Header */}
+                <div className="flex items-start gap-4 p-5 border-b border-white/8">
+                  <div className="relative shrink-0">
+                    {char.portrait_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={char.portrait_url} alt={char.name} className="w-16 h-16 rounded-2xl object-cover" />
+                    ) : (
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${char.avatar_color} flex items-center justify-center text-white text-xl font-bold`}>
+                        {char.name.split(" ").map(n => n[0]).join("")}
                       </div>
-                      <button onClick={() => toggleLock(char.id)}
-                        className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-all border text-xs font-medium ${
-                          char.memoryLocked
-                            ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/25"
-                            : "glass glass-hover text-gray-500 border-white/10 hover:text-white"
-                        }`}
-                      >
-                        {char.memoryLocked ? <><Lock className="w-3 h-3" /> Locked</> : <><Unlock className="w-3 h-3" /> Lock</>}
+                    )}
+                    {generatingPortrait === char.id && (
+                      <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-bold text-white">{char.name}</h3>
+                        <p className="text-xs text-gray-500">{char.role}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => toggleLock(char)}
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-all border text-xs font-medium ${
+                            char.memory_locked
+                              ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/25"
+                              : "glass glass-hover text-gray-500 border-white/10 hover:text-white"
+                          }`}
+                        >
+                          {char.memory_locked ? <><Lock className="w-3 h-3" /> Locked</> : <><Unlock className="w-3 h-3" /> Lock</>}
+                        </button>
+                        <button onClick={() => deleteCharacter(char.id)}
+                          className="p-1.5 rounded-lg text-gray-600 hover:text-rose-400 hover:bg-rose-500/10 transition-colors border border-transparent hover:border-rose-500/20">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2 leading-relaxed line-clamp-2">{char.description}</p>
+
+                    <div className="flex items-center gap-2 mt-3">
+                      <button onClick={() => generatePortrait(char)}
+                        disabled={generatingPortrait === char.id}
+                        className="flex items-center gap-1 text-[10px] glass glass-hover rounded-lg px-2 py-1 text-gray-400 hover:text-indigo-300 transition-colors border border-white/10 disabled:opacity-50">
+                        {generatingPortrait === char.id
+                          ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          : <ImageIcon className="w-2.5 h-2.5" />}
+                        {char.portrait_url ? "Regen portrait" : "Generate portrait"}
+                      </button>
+                      <button onClick={() => generateBackstory(char)}
+                        disabled={generatingBackstory === char.id}
+                        className="flex items-center gap-1 text-[10px] glass glass-hover rounded-lg px-2 py-1 text-gray-400 hover:text-violet-300 transition-colors border border-white/10 disabled:opacity-50">
+                        {generatingBackstory === char.id
+                          ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          : <Wand2 className="w-2.5 h-2.5" />}
+                        {char.backstory ? "Regen backstory" : "Generate backstory"}
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2 leading-relaxed line-clamp-2">{char.description}</p>
-
-                  {/* AI action buttons */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <button onClick={() => generatePortrait(char)}
-                      disabled={generatingPortrait === char.id}
-                      className="flex items-center gap-1 text-[10px] glass glass-hover rounded-lg px-2 py-1 text-gray-400 hover:text-indigo-300 transition-colors border border-white/10 disabled:opacity-50">
-                      {generatingPortrait === char.id
-                        ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                        : <ImageIcon className="w-2.5 h-2.5" />
-                      }
-                      {char.portrait_url ? "Regen portrait" : "Generate portrait"}
-                    </button>
-                    <button onClick={() => generateBackstory(char)}
-                      disabled={generatingBackstory === char.id}
-                      className="flex items-center gap-1 text-[10px] glass glass-hover rounded-lg px-2 py-1 text-gray-400 hover:text-violet-300 transition-colors border border-white/10 disabled:opacity-50">
-                      {generatingBackstory === char.id
-                        ? <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                        : <Wand2 className="w-2.5 h-2.5" />
-                      }
-                      {char.backstory ? "Regen backstory" : "Generate backstory"}
-                    </button>
-                  </div>
                 </div>
-              </div>
 
-              {/* Profile details */}
-              <div className="p-5 grid grid-cols-2 gap-3 text-xs">
-                {[
-                  { label: "Emotion Profile", value: char.emotionProfile },
-                  { label: "Voice Type",      value: char.voiceType },
-                ].map((f) => (
-                  <div key={f.label} className="glass rounded-xl p-3">
-                    <p className="text-gray-600 mb-1">{f.label}</p>
-                    <p className="text-gray-300 font-medium">{f.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* AI Backstory */}
-              {char.backstory && (
-                <div className="border-t border-white/8">
-                  <button
-                    onClick={() => setExpandedBackstory(expandedBackstory === char.id ? null : char.id)}
-                    className="flex items-center justify-between w-full px-5 py-3 hover:bg-white/[0.03] transition-colors"
-                  >
-                    <span className="text-xs font-medium text-violet-400 flex items-center gap-1.5">
-                      <Wand2 className="w-3 h-3" /> AI Backstory
-                    </span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-600 transition-transform ${expandedBackstory === char.id ? "rotate-180" : ""}`} />
-                  </button>
-                  {expandedBackstory === char.id && (
-                    <div className="px-5 pb-4">
-                      <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{char.backstory}</p>
+                <div className="p-5 grid grid-cols-2 gap-3 text-xs">
+                  {[
+                    { label: "Emotion Profile", value: char.emotion_profile },
+                    { label: "Voice Type", value: char.voice_type },
+                  ].map((f) => (
+                    <div key={f.label} className="glass rounded-xl p-3">
+                      <p className="text-gray-600 mb-1">{f.label}</p>
+                      <p className="text-gray-300 font-medium">{f.value}</p>
                     </div>
+                  ))}
+                </div>
+
+                {char.backstory && (
+                  <div className="border-t border-white/8">
+                    <button
+                      onClick={() => setExpandedBackstory(expandedBackstory === char.id ? null : char.id)}
+                      className="flex items-center justify-between w-full px-5 py-3 hover:bg-white/[0.03] transition-colors"
+                    >
+                      <span className="text-xs font-medium text-violet-400 flex items-center gap-1.5">
+                        <Wand2 className="w-3 h-3" /> AI Backstory
+                      </span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-gray-600 transition-transform ${expandedBackstory === char.id ? "rotate-180" : ""}`} />
+                    </button>
+                    {expandedBackstory === char.id && (
+                      <div className="px-5 pb-4">
+                        <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{char.backstory}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {[
+                  { label: "Appearance", content: char.appearance },
+                  { label: "Personality", content: char.personality },
+                ].map((section) => (
+                  <details key={section.label} className="border-t border-white/8">
+                    <summary className="flex items-center justify-between px-5 py-3 cursor-pointer list-none hover:bg-white/[0.03] transition-colors">
+                      <span className="text-xs font-medium text-gray-400">{section.label}</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
+                    </summary>
+                    <div className="px-5 pb-4">
+                      <p className="text-xs text-gray-400 leading-relaxed">{section.content}</p>
+                    </div>
+                  </details>
+                ))}
+
+                <div className="px-5 pb-4 flex items-center gap-2">
+                  <OpenClawBadge label="Bible Keeper" size="sm" />
+                  {char.memory_locked && (
+                    <span className="text-[10px] text-gray-600">Memory locked · Consistent across all episodes</span>
                   )}
                 </div>
-              )}
-
-              {[
-                { label: "Appearance",  content: char.appearance },
-                { label: "Personality", content: char.personality },
-              ].map((section) => (
-                <details key={section.label} className="border-t border-white/8">
-                  <summary className="flex items-center justify-between px-5 py-3 cursor-pointer list-none hover:bg-white/[0.03] transition-colors">
-                    <span className="text-xs font-medium text-gray-400">{section.label}</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
-                  </summary>
-                  <div className="px-5 pb-4">
-                    <p className="text-xs text-gray-400 leading-relaxed">{section.content}</p>
-                  </div>
-                </details>
-              ))}
-
-              <div className="px-5 pb-4 flex items-center gap-2">
-                <OpenClawBadge label="Bible Keeper" size="sm" />
-                {char.memoryLocked && (
-                  <span className="text-[10px] text-gray-600">Memory locked · Consistent across all episodes</span>
-                )}
-                {!char.portrait_url && !generatingPortrait && (
-                  <span className="text-[10px] text-gray-600 flex items-center gap-1">
-                    <User className="w-2.5 h-2.5" /> No portrait yet
-                  </span>
-                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
