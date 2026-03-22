@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Cpu, Eye, EyeOff, AlertCircle, Check } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
+import { createClient } from "@/lib/supabase/client";
 
 const PLAN_LABELS: Record<string, string> = {
   free:       "Free",
@@ -19,16 +20,20 @@ function SignupForm() {
   const planLabel    = PLAN_LABELS[plan] ?? "Free";
   const isFree       = plan === "free" || !PLAN_LABELS[plan];
 
-  const [showPw, setShowPw]         = useState(false);
+  const [showPw, setShowPw]          = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading]        = useState(false);
   const [errors, setErrors]          = useState<Record<string, string>>({});
+  const [success, setSuccess]        = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const pw      = fd.get("password") as string;
-    const confirm = fd.get("confirm") as string;
+    const fd        = new FormData(e.currentTarget);
+    const firstName = fd.get("firstName") as string;
+    const lastName  = fd.get("lastName") as string;
+    const email     = fd.get("email") as string;
+    const pw        = fd.get("password") as string;
+    const confirm   = fd.get("confirm") as string;
     const newErrors: Record<string, string> = {};
 
     if (pw.length < 8)    newErrors.password = "Password must be at least 8 characters.";
@@ -39,8 +44,58 @@ function SignupForm() {
 
     setErrors({});
     setLoading(true);
-    setTimeout(() => { router.push("/dashboard"); }, 1200);
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signUp({
+      email,
+      password: pw,
+      options: {
+        data: {
+          full_name:   `${firstName} ${lastName}`.trim(),
+          studio_name: `${firstName}'s Studio`,
+          plan,
+        },
+      },
+    });
+
+    if (authError) {
+      setErrors({ general: authError.message });
+      setLoading(false);
+      return;
+    }
+
+    // Supabase may require email confirmation depending on project settings.
+    // If email confirmation is disabled, sign them in immediately.
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pw });
+    if (!signInError) {
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
+
+    // Email confirmation required
+    setSuccess(true);
+    setLoading(false);
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-emerald-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Check your email</h1>
+          <p className="text-gray-400 text-sm mb-6">
+            We sent a confirmation link to your email address. Click it to activate your studio.
+          </p>
+          <Link href="/login" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+            Back to sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -61,7 +116,6 @@ function SignupForm() {
           </p>
         </div>
 
-        {/* Benefits */}
         <div className="flex justify-center gap-4 flex-wrap mb-6">
           {[
             isFree ? "Free forever plan" : planLabel,
@@ -75,6 +129,12 @@ function SignupForm() {
         </div>
 
         <div className="glass rounded-2xl p-8">
+          {errors.general && (
+            <div className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 mb-5 text-sm text-rose-400">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {errors.general}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -126,9 +186,9 @@ function SignupForm() {
                 <input name="terms" type="checkbox" id="terms" className="w-4 h-4 mt-0.5 accent-indigo-500" />
                 <label htmlFor="terms" className="text-xs text-gray-400">
                   I agree to the{" "}
-                  <a href="https://synthos.ai/terms" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Terms of Service</a>
+                  <span className="text-indigo-400 underline underline-offset-2">Terms of Service</span>
                   {" "}and{" "}
-                  <a href="https://synthos.ai/privacy" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Privacy Policy</a>
+                  <span className="text-indigo-400 underline underline-offset-2">Privacy Policy</span>
                 </label>
               </div>
               {errors.terms && (

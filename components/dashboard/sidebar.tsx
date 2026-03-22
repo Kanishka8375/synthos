@@ -1,14 +1,25 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Cpu, LogOut, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { NAV_SECTIONS } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 import clsx from "clsx";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router   = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleSignOut = async () => {
+    const ok = window.confirm("Sign out of your studio?");
+    if (!ok) return;
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <aside className={clsx(
@@ -59,10 +70,7 @@ export function Sidebar() {
       {/* Footer */}
       <div className="p-2 border-t border-white/8">
         <button
-          onClick={() => {
-            const ok = window.confirm("Sign out of your studio?");
-            if (ok) window.location.href = "/";
-          }}
+          onClick={handleSignOut}
           className={clsx("flex items-center gap-2.5 px-2 py-2 rounded-xl text-xs text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all mb-0.5 w-full", collapsed && "justify-center")}
           title={collapsed ? "Sign out" : undefined}
         >
