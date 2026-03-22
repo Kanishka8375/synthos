@@ -1,61 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { prompt, project_id } = body;
+  const {
+    prompt,
+    model = "wan",
+    duration = 4,
+    aspectRatio = "16:9",
+    project_id,
+  } = body as {
+    prompt: string;
+    model?: string;
+    duration?: number;
+    aspectRatio?: string;
+    project_id?: string;
+  };
+
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
-  const token = process.env.HUGGINGFACE_TOKEN;
-  if (!token) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 500 });
+  const encoded = encodeURIComponent(`anime style, high quality, fluid animation: ${prompt}`);
+  const videoUrl =
+    `https://gen.pollinations.ai/video/${encoded}` +
+    `?model=${model}&duration=${duration}&aspectRatio=${encodeURIComponent(aspectRatio)}&nologo=true`;
 
-  // HuggingFace text-to-video — damo-vilab/text-to-video-ms-1.7b
-  const videoPrompt = `anime style, high quality, fluid animation: ${prompt}`;
+  const headers: Record<string, string> = {};
+  if (POLLINATIONS_KEY) headers["Authorization"] = `Bearer ${POLLINATIONS_KEY}`;
 
   try {
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/damo-vilab/text-to-video-ms-1.7b",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: videoPrompt,
-          parameters: { num_inference_steps: 25 },
-        }),
-      }
-    );
+    const pollinationsRes = await fetch(videoUrl, { headers });
 
-    if (!response.ok) {
-      if (response.status === 503) {
-        return NextResponse.json({
-          status: "loading",
-          message: "Video model is warming up (free tier cold start). Try again in 30–60 seconds.",
-        }, { status: 202 });
-      }
-      const errText = await response.text();
-      throw new Error(`HuggingFace error: ${errText}`);
+    if (!pollinationsRes.ok) {
+      const text = await pollinationsRes.text().catch(() => "");
+      return NextResponse.json(
+        { error: `Video generation failed (${pollinationsRes.status}): ${text}` },
+        { status: 502 }
+      );
     }
 
-    const videoBuffer = await response.arrayBuffer();
-    const base64Video = Buffer.from(videoBuffer).toString("base64");
-    const videoDataUrl = `data:video/mp4;base64,${base64Video}`;
+    const contentType = pollinationsRes.headers.get("content-type") ?? "video/mp4";
 
-    // Log to Supabase generated_images table reusing for video
-    await supabase.from("generated_images").insert({
+    // Log the generation in Supabase (fire-and-forget)
+    supabase.from("generated_images").insert({
       user_id: user.id,
       project_id: project_id ?? null,
-      prompt: videoPrompt,
-      url: videoDataUrl,
-    });
+      prompt,
+      url: videoUrl,
+    }).then(() => {});
 
-    return NextResponse.json({ video: videoDataUrl, status: "Ready" });
+    // Stream the binary MP4 directly back to the client
+    return new Response(pollinationsRes.body, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "no-store",
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Video generation failed";
     return NextResponse.json({ error: message }, { status: 500 });
