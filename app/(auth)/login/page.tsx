@@ -1,22 +1,30 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Cpu, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const email = fd.get("email") as string;
+    const password = fd.get("password") as string;
+    if (!email || !password) {
+      setError("Please enter your email and password.");
+      return;
+    }
     setLoading(true);
     setError("");
-    // Simulate auth — redirect to dashboard
     setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1000);
+      router.push("/dashboard");
+    }, 800);
   };
 
   return (
@@ -43,34 +51,52 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-2">Email address</label>
-              <input type="email" placeholder="creator@studio.com" required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
+              <label htmlFor="email" className="block text-xs font-medium text-gray-400 mb-2">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="creator@studio.com"
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+              />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-gray-400">Password</label>
+                <label htmlFor="password" className="text-xs font-medium text-gray-400">Password</label>
                 <Link href="/forgot-password" className="text-xs text-indigo-400 hover:text-indigo-300">Forgot password?</Link>
               </div>
               <div className="relative">
-                <input type={showPassword ? "text" : "password"} placeholder="••••••••" required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="remember" className="w-4 h-4 accent-indigo-500" />
-              <label htmlFor="remember" className="text-xs text-gray-400">Keep me signed in</label>
+              <input type="checkbox" id="remember" name="remember" className="w-4 h-4 accent-indigo-500" />
+              <label htmlFor="remember" className="text-xs text-gray-400 cursor-pointer">Keep me signed in</label>
             </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]">
-              {loading ? "Signing in..." : "Sign in to studio"}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
+            >
+              {loading ? "Signing in…" : "Sign in to studio"}
             </button>
           </form>
 
@@ -81,7 +107,16 @@ export default function LoginPage() {
 
           <div className="grid grid-cols-2 gap-3">
             {["GitHub", "Google"].map((p) => (
-              <button key={p} className="glass glass-hover py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white transition-all">{p}</button>
+              <button
+                key={p}
+                onClick={() => {
+                  setLoading(true);
+                  setTimeout(() => router.push("/dashboard"), 800);
+                }}
+                className="glass glass-hover py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white transition-all"
+              >
+                {p}
+              </button>
             ))}
           </div>
         </div>

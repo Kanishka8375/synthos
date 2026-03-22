@@ -1,10 +1,14 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Play, Cpu } from "lucide-react";
+import { ArrowRight, Play, Cpu, X } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
 
 export function Hero() {
+  const [demoOpen, setDemoOpen] = useState(false);
+
   return (
+    <>
     <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden pt-20">
       {/* Bg glows */}
       <div className="absolute inset-0 pointer-events-none">
@@ -41,7 +45,10 @@ export function Hero() {
           >
             Start your studio <ArrowRight className="w-5 h-5" />
           </Link>
-          <button className="flex items-center gap-2 glass glass-hover text-gray-300 hover:text-white px-8 py-4 rounded-xl font-semibold text-lg">
+          <button
+            onClick={() => setDemoOpen(true)}
+            className="flex items-center gap-2 glass glass-hover text-gray-300 hover:text-white px-8 py-4 rounded-xl font-semibold text-lg"
+          >
             <Play className="w-5 h-5 fill-current" />
             Watch demo
           </button>
@@ -50,9 +57,9 @@ export function Hero() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-2xl mx-auto">
           {[
-            { value: "9", label: "AI Agents" },
-            { value: "50K+", label: "Episodes rendered" },
-            { value: "40+", label: "Languages" },
+            { value: "9",     label: "AI Agents" },
+            { value: "1,200+", label: "Episodes rendered" },
+            { value: "12+",   label: "Languages" },
             { value: "99.9%", label: "Uptime SLA" },
           ].map((s) => (
             <div key={s.label} className="text-center">
@@ -63,5 +70,47 @@ export function Hero() {
         </div>
       </div>
     </section>
+    {/* Demo modal */}
+    {demoOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        onClick={() => setDemoOpen(false)}
+      >
+        <div
+          className="glass rounded-2xl p-8 max-w-lg w-full text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="w-16 h-16 bg-indigo-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Play className="w-8 h-8 text-indigo-400 fill-indigo-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Demo coming soon</h3>
+          <p className="text-gray-400 text-sm mb-6">
+            The SYNTHOS walkthrough video is in production. Sign up to get notified when it&apos;s live — and access the interactive studio now.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link
+              href="/signup"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold"
+              onClick={() => setDemoOpen(false)}
+            >
+              Try the studio
+            </Link>
+            <button
+              onClick={() => setDemoOpen(false)}
+              className="glass glass-hover text-gray-400 hover:text-white px-5 py-2.5 rounded-xl text-sm"
+            >
+              Close
+            </button>
+          </div>
+          <button
+            onClick={() => setDemoOpen(false)}
+            className="absolute top-4 right-4 text-gray-600 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

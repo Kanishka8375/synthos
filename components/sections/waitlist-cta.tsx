@@ -19,7 +19,7 @@ export function WaitlistCTA() {
           eyebrow="Early access"
           title="Join the"
           highlight="studio waitlist"
-          subtitle="Get early access to SYNTHOS, founding creator pricing, and a direct line to our team."
+          subtitle="Get early access to SYNTHOS, priority onboarding, and a direct line to our team."
         />
 
         <div className="mt-10">
@@ -37,7 +37,7 @@ export function WaitlistCTA() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@studio.com"
+                placeholder="creator@studio.com"
                 required
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors text-sm"
               />
@@ -50,7 +50,7 @@ export function WaitlistCTA() {
             </form>
           )}
 
-          <p className="text-xs text-gray-600 mt-4">No spam. Unsubscribe anytime. Founding creators get 40% off Studio plan.</p>
+          <p className="text-xs text-gray-600 mt-4">No spam. Unsubscribe anytime. Founding creators receive exclusive early-access benefits.</p>
         </div>
 
         {/* Social proof */}

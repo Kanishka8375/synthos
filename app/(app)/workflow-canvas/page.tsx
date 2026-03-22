@@ -1,7 +1,9 @@
+"use client";
+import { useState } from "react";
 import { DashHeader } from "@/components/dashboard/header";
 import { OpenClawBadge } from "@/components/ui/openclaw-badge";
 import { MOCK_WORKFLOW_NODES, MOCK_WORKFLOW_EDGES } from "@/lib/mock-data";
-import { Plus, Save, Play, RotateCcw } from "lucide-react";
+import { Plus, Save, Play, RotateCcw, CheckCircle2 } from "lucide-react";
 
 const nodeColors: Record<string, string> = {
   input:      "border-gray-500/50 bg-gray-500/10 text-gray-300",
@@ -27,6 +29,20 @@ const NODE_W = 110;
 const NODE_H = 56;
 
 export default function WorkflowCanvasPage() {
+  const [saved, setSaved]   = useState(false);
+  const [running, setRunning] = useState(false);
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleRun = () => {
+    if (running) return;
+    setRunning(true);
+    setTimeout(() => setRunning(false), 3000);
+  };
+
   // Compute edge paths
   const edges = MOCK_WORKFLOW_EDGES.map((e) => {
     const from = MOCK_WORKFLOW_NODES.find(n => n.id === e.from)!;
@@ -49,13 +65,28 @@ export default function WorkflowCanvasPage() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)]">
+    <div className="flex flex-col h-[calc(100vh-56px)]">
       <DashHeader title="Workflow Canvas" description="Visual node-based pipeline editor"
         actions={
           <div className="flex items-center gap-2">
-            <button className="glass glass-hover p-1.5 rounded-lg text-gray-400 hover:text-white"><RotateCcw className="w-3.5 h-3.5" /></button>
-            <button className="flex items-center gap-1.5 glass glass-hover text-gray-300 hover:text-white px-3 py-1.5 rounded-lg text-xs"><Save className="w-3.5 h-3.5" /> Save</button>
-            <button className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium"><Play className="w-3.5 h-3.5 fill-current" /> Run</button>
+            <button onClick={() => alert("Undo history — coming in v1.1")} className="glass glass-hover p-1.5 rounded-lg text-gray-400 hover:text-white" title="Undo last change"><RotateCcw className="w-3.5 h-3.5" /></button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1.5 glass glass-hover text-gray-300 hover:text-white px-3 py-1.5 rounded-lg text-xs"
+            >
+              {saved ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Save className="w-3.5 h-3.5" />}
+              {saved ? "Saved!" : "Save"}
+            </button>
+            <button
+              onClick={handleRun}
+              disabled={running}
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-70 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            >
+              {running
+                ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Running…</>
+                : <><Play className="w-3.5 h-3.5 fill-current" /> Run</>
+              }
+            </button>
           </div>
         }
       />
@@ -65,11 +96,13 @@ export default function WorkflowCanvasPage() {
           <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest mb-2">Node Palette</p>
           <div className="space-y-1.5">
             {palette.map((p) => (
-              <div key={p.label}
-                className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-grab active:cursor-grabbing ${p.color} bg-white/[0.03] hover:bg-white/[0.06] transition-colors`}>
+              <button
+                key={p.label}
+                onClick={() => alert(`Add "${p.label}" node — drag-and-drop editor coming in v1.1`)}
+                className={`flex items-center gap-2 p-2 rounded-lg border text-xs w-full text-left ${p.color} bg-white/[0.03] hover:bg-white/[0.06] transition-colors`}>
                 <Plus className="w-3 h-3 opacity-50" />
                 {p.label}
-              </div>
+              </button>
             ))}
           </div>
 

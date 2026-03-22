@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Cpu, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
 

@@ -8,10 +8,10 @@ import { FolderOpen, Film, Cpu, Users, ArrowRight, Zap, Clock } from "lucide-rea
 import Link from "next/link";
 
 const stats = [
-  { label: "Projects", value: "6", icon: FolderOpen, sub: "+2 this month", color: "text-indigo-400 bg-indigo-500/10" },
-  { label: "Renders", value: "1,247", icon: Film, sub: "48 queued", color: "text-pink-400 bg-pink-500/10" },
-  { label: "Episodes", value: "63", icon: Cpu, sub: "12 in pipeline", color: "text-violet-400 bg-violet-500/10" },
-  { label: "Characters", value: "24", icon: Users, sub: "8 DNA-locked", color: "text-cyan-400 bg-cyan-500/10" },
+  { label: "Projects",   value: "6",  icon: FolderOpen, sub: "2 active · 2 drafts",           color: "text-indigo-400 bg-indigo-500/10" },
+  { label: "Renders",    value: "5",  icon: Film,        sub: "2 rendering · 1 queued",         color: "text-pink-400 bg-pink-500/10" },
+  { label: "Episodes",   value: "5",  icon: Cpu,         sub: "1 completed · 2 in progress",    color: "text-violet-400 bg-violet-500/10" },
+  { label: "Characters", value: "4",  icon: Users,       sub: "2 DNA-locked · 2 unlocked",      color: "text-cyan-400 bg-cyan-500/10" },
 ];
 
 const activity = [
@@ -74,8 +74,8 @@ export default function DashboardPage() {
         {/* Usage meters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label: "Render Hours", used: renderHoursUsed, limit: 100, unit: "hrs", color: "bg-indigo-500" },
-            { label: "Storage", used: storageUsed, limit: 100, unit: "GB", color: "bg-pink-500" },
+            { label: "Render Hours", used: renderHoursUsed, limit: 500,  unit: "hrs", color: "bg-indigo-500" },
+            { label: "Storage",      used: storageUsed,    limit: 1000, unit: "GB",  color: "bg-pink-500" },
           ].map((m) => (
             <div key={m.label} className="glass rounded-2xl p-4">
               <div className="flex items-center justify-between text-xs mb-2">
@@ -83,9 +83,9 @@ export default function DashboardPage() {
                 <span className="text-gray-300">{m.used} / {m.limit} {m.unit}</span>
               </div>
               <div className="h-2 bg-white/8 rounded-full overflow-hidden">
-                <div className={`h-full ${m.color} rounded-full`} style={{ width: `${m.used}%` }} />
+                <div className={`h-full ${m.color} rounded-full`} style={{ width: `${Math.round((m.used / m.limit) * 100)}%` }} />
               </div>
-              <p className="text-xs text-gray-600 mt-1">{m.used}% used — resets in 8 days</p>
+              <p className="text-xs text-gray-600 mt-1">{Math.round((m.used / m.limit) * 100)}% used — resets in 8 days</p>
             </div>
           ))}
         </div>

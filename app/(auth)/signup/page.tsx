@@ -1,31 +1,45 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Cpu, Eye, EyeOff, AlertCircle, Check } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
 
-export default function SignupPage() {
-  const [showPw, setShowPw] = useState(false);
+const PLAN_LABELS: Record<string, string> = {
+  free:       "Free",
+  creator:    "Creator · $29/mo",
+  studio:     "Studio · $99/mo",
+  enterprise: "Enterprise",
+};
+
+function SignupForm() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const plan         = searchParams.get("plan") ?? "free";
+  const planLabel    = PLAN_LABELS[plan] ?? "Free";
+  const isFree       = plan === "free" || !PLAN_LABELS[plan];
+
+  const [showPw, setShowPw]         = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading]        = useState(false);
+  const [errors, setErrors]          = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const pw = fd.get("password") as string;
+    const pw      = fd.get("password") as string;
     const confirm = fd.get("confirm") as string;
     const newErrors: Record<string, string> = {};
 
-    if (pw.length < 8) newErrors.password = "Password must be at least 8 characters.";
-    if (pw !== confirm) newErrors.confirm = "Passwords do not match.";
-    if (!fd.get("terms")) newErrors.terms = "You must accept the terms.";
+    if (pw.length < 8)    newErrors.password = "Password must be at least 8 characters.";
+    if (pw !== confirm)   newErrors.confirm  = "Passwords do not match.";
+    if (!fd.get("terms")) newErrors.terms    = "You must accept the terms to continue.";
 
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
     setLoading(true);
-    setTimeout(() => { window.location.href = "/dashboard"; }, 1200);
+    setTimeout(() => { router.push("/dashboard"); }, 1200);
   };
 
   return (
@@ -39,12 +53,21 @@ export default function SignupPage() {
             <span className="text-2xl font-bold"><GradientText>SYNTHOS</GradientText></span>
           </Link>
           <h1 className="text-3xl font-bold text-white mb-2">Open your studio</h1>
-          <p className="text-gray-400 text-sm">Free forever plan — no credit card needed</p>
+          <p className="text-gray-400 text-sm">
+            {isFree
+              ? "Free plan — no credit card required"
+              : <>Starting on the <span className="text-indigo-400 font-medium">{planLabel}</span> plan</>
+            }
+          </p>
         </div>
 
         {/* Benefits */}
         <div className="flex justify-center gap-4 flex-wrap mb-6">
-          {["Free plan", "No card required", "Cancel anytime"].map((b) => (
+          {[
+            isFree ? "Free forever plan" : planLabel,
+            "No lock-in",
+            "Cancel anytime",
+          ].map((b) => (
             <span key={b} className="flex items-center gap-1 text-xs text-gray-400">
               <Check className="w-3.5 h-3.5 text-emerald-400" /> {b}
             </span>
@@ -73,9 +96,11 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-2">Password</label>
+              <label className="block text-xs font-medium text-gray-400 mb-2">
+                Password <span className="text-gray-600 font-normal">(8 characters minimum)</span>
+              </label>
               <div className="relative">
-                <input name="password" type={showPw ? "text" : "password"} placeholder="Min. 8 characters" required
+                <input name="password" type={showPw ? "text" : "password"} placeholder="Create a strong password" required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -87,7 +112,7 @@ export default function SignupPage() {
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-2">Confirm password</label>
               <div className="relative">
-                <input name="confirm" type={showConfirm ? "text" : "password"} placeholder="Repeat password" required
+                <input name="confirm" type={showConfirm ? "text" : "password"} placeholder="Repeat your password" required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-11 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -101,8 +126,9 @@ export default function SignupPage() {
                 <input name="terms" type="checkbox" id="terms" className="w-4 h-4 mt-0.5 accent-indigo-500" />
                 <label htmlFor="terms" className="text-xs text-gray-400">
                   I agree to the{" "}
-                  <Link href="#" className="text-indigo-400 hover:text-indigo-300">Terms of Service</Link> and{" "}
-                  <Link href="#" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</Link>
+                  <a href="https://synthos.ai/terms" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Terms of Service</a>
+                  {" "}and{" "}
+                  <a href="https://synthos.ai/privacy" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Privacy Policy</a>
                 </label>
               </div>
               {errors.terms && (
@@ -113,8 +139,8 @@ export default function SignupPage() {
             </div>
 
             <button type="submit" disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01] mt-2">
-              {loading ? "Creating your studio..." : "Create studio"}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01] mt-2">
+              {loading ? "Creating your studio…" : "Create studio"}
             </button>
           </form>
         </div>
@@ -125,5 +151,13 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><span className="text-gray-500 text-sm">Loading…</span></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }

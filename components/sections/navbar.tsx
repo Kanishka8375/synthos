@@ -35,7 +35,7 @@ export function Navbar() {
 
       {open && (
         <div className="md:hidden border-t border-white/8 bg-[#07070f] px-4 py-4 space-y-2">
-          {[["#features","Features"],["#how-it-works","How it works"],["#pricing","Pricing"]].map(([href,label]) => (
+          {[["#features","Features"],["#how-it-works","How it works"],["#comparison","Compare"],["#pricing","Pricing"]].map(([href,label]) => (
             <Link key={label} href={href} className="block text-gray-400 hover:text-white py-2 text-sm" onClick={() => setOpen(false)}>{label}</Link>
           ))}
           <div className="pt-3 border-t border-white/8 flex flex-col gap-2">
