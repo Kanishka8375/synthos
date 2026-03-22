@@ -26,40 +26,40 @@ export const NAV_SECTIONS = [
   {
     label: "Production",
     items: [
-      { href: "/projects", label: "Projects", icon: FolderOpen },
-      { href: "/episode-pipeline", label: "Episode Pipeline", icon: GitBranch },
-      { href: "/workflow-canvas", label: "Workflow Canvas", icon: Workflow },
+      { href: "/projects", label: "Projects", icon: FolderOpen, comingSoon: true },
+      { href: "/episode-pipeline", label: "Episode Pipeline", icon: GitBranch, comingSoon: true },
+      { href: "/workflow-canvas", label: "Workflow Canvas", icon: Workflow, comingSoon: true },
     ],
   },
   {
     label: "Creative",
     items: [
-      { href: "/character-dna-vault", label: "Character DNA Vault", icon: Users },
-      { href: "/world-atlas", label: "World Atlas", icon: Globe2 },
-      { href: "/emotion-choreography", label: "Emotion Choreography", icon: Waves },
+      { href: "/character-dna-vault", label: "Character DNA Vault", icon: Users, comingSoon: true },
+      { href: "/world-atlas", label: "World Atlas", icon: Globe2, comingSoon: true },
+      { href: "/emotion-choreography", label: "Emotion Choreography", icon: Waves, comingSoon: true },
     ],
   },
   {
     label: "Tools",
     items: [
-      { href: "/soundtrack-forge", label: "Soundtrack Forge", icon: Music2 },
-      { href: "/render-queue", label: "Render Queue", icon: Cpu },
-      { href: "/production-bible", label: "Production Bible", icon: BookOpen },
+      { href: "/soundtrack-forge", label: "Soundtrack Forge", icon: Music2, comingSoon: true },
+      { href: "/render-queue", label: "Render Queue", icon: Cpu, comingSoon: true },
+      { href: "/production-bible", label: "Production Bible", icon: BookOpen, comingSoon: true },
     ],
   },
   {
     label: "Discover",
     items: [
-      { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
-      { href: "/trend-radar", label: "Trend Radar", icon: TrendingUp },
-      { href: "/multilingual-engine", label: "Multilingual Engine", icon: Languages },
+      { href: "/marketplace", label: "Marketplace", icon: ShoppingBag, comingSoon: true },
+      { href: "/trend-radar", label: "Trend Radar", icon: TrendingUp, comingSoon: true },
+      { href: "/multilingual-engine", label: "Multilingual Engine", icon: Languages, comingSoon: true },
     ],
   },
   {
     label: "Account",
     items: [
       { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/billing", label: "Billing", icon: CreditCard },
+      { href: "/billing", label: "Billing", icon: CreditCard, comingSoon: true },
     ],
   },
 ];

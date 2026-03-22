@@ -78,7 +78,16 @@ export function Sidebar() {
                   )}
                 >
                   <item.icon className="w-4 h-4 shrink-0" />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  {!collapsed && (
+                    <>
+                      <span className="truncate flex-1">{item.label}</span>
+                      {"comingSoon" in item && item.comingSoon && (
+                        <span className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+                          Soon
+                        </span>
+                      )}
+                    </>
+                  )}
                 </Link>
               );
             })}
