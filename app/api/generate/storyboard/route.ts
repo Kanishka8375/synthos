@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const POLLINATIONS_KEY = process.env.POLLINATIONS_API_KEY;
+
 /**
  * Generates a storyboard: N scene images via Pollinations.ai in parallel.
  * POST body: { scenes: string[], style?: string, project_id?: string }
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
       const prompt = encodeURIComponent(
         `${style} style, storyboard panel ${i + 1}, high quality, cinematic: ${scene}`
       );
-      const url = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=288&seed=${seed}&nologo=true&model=flux`;
+      const url = `https://gen.pollinations.ai/image/${prompt}?width=512&height=288&seed=${seed}&nologo=true&model=flux`;
 
       // Save to DB (fire-and-forget)
       supabase.from("generated_images").insert({

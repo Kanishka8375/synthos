@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -10,79 +12,88 @@ export async function POST(request: NextRequest) {
   const { prompt, title = "New Composition", genre = "Hybrid", mood = "Epic", project_id } = body;
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
-  const token = process.env.HUGGINGFACE_TOKEN;
-  if (!token) return NextResponse.json({ error: "HUGGINGFACE_TOKEN not configured" }, { status: 500 });
+  if (!OPENROUTER_KEY) return NextResponse.json({ error: "OPENROUTER_API_KEY not configured" }, { status: 500 });
 
-  // HuggingFace MusicGen — facebook/musicgen-small
   const musicPrompt = `${mood} ${genre} anime soundtrack: ${prompt}`;
 
   try {
-    const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/facebook/musicgen-small",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: musicPrompt,
-          parameters: { max_new_tokens: 256 },
-        }),
-      }
-    );
+    // Use OpenRouter to generate a detailed music composition description + MIDI-style notation
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-3.3-70b-instruct",
+        messages: [{
+          role: "user",
+          content: `You are a music composer. Create a detailed composition description for: "${musicPrompt}"
 
-    if (!response.ok) {
-      const errText = await response.text();
-      // Model loading (503) — return pending status
-      if (response.status === 503) {
-        return NextResponse.json({
-          status: "loading",
-          message: "MusicGen model is warming up (free tier). Try again in 20–30 seconds.",
-        }, { status: 202 });
-      }
-      throw new Error(`HuggingFace error: ${errText}`);
-    }
+Return JSON with these exact fields:
+{
+  "title": "track title",
+  "bpm": 120,
+  "key": "A minor",
+  "time_signature": "4/4",
+  "duration": "2:30",
+  "instruments": ["strings", "piano", "drums"],
+  "structure": "Intro (0:00) → Build (0:30) → Drop (1:00) → Outro (2:00)",
+  "mood_arc": "starts tense, builds to epic climax, resolves peacefully",
+  "description": "2-3 sentence description of the track"
+}
 
-    // Response is raw audio bytes (wav/flac)
-    const audioBuffer = await response.arrayBuffer();
-    const base64Audio = Buffer.from(audioBuffer).toString("base64");
-    const audioDataUrl = `data:audio/wav;base64,${base64Audio}`;
+Return ONLY the JSON, no other text.`,
+        }],
+        max_tokens: 400,
+      }),
+    });
 
-    // Save metadata to Supabase (store base64 in audio_url)
-    const bpm = 80 + Math.floor(Math.random() * 80);
-    const durationSecs = 15 + Math.floor(Math.random() * 15);
-    const duration = `0:${durationSecs.toString().padStart(2, "0")}`;
+    if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
+
+    const json = await res.json();
+    const raw = json.choices?.[0]?.message?.content ?? "{}";
+
+    let composition: Record<string, unknown> = {};
+    try {
+      const match = raw.match(/\{[\s\S]*\}/);
+      composition = JSON.parse(match?.[0] ?? "{}");
+    } catch { /* use empty */ }
+
+    const bpm = (composition.bpm as number) || (80 + Math.floor(Math.random() * 80));
+    const duration = (composition.duration as string) || "2:30";
+    const trackTitle = (composition.title as string) || title;
 
     const { data, error } = await supabase
       .from("generated_tracks")
       .insert({
         user_id: user.id,
         project_id: project_id ?? null,
-        title,
+        title: trackTitle,
         prompt: musicPrompt,
         genre,
         mood,
         duration,
         bpm,
-        audio_url: audioDataUrl,
-        status: "Ready",
+        audio_url: null,
+        status: "Composed",
+        composition_data: JSON.stringify(composition),
       })
       .select()
       .single();
 
-    if (error) {
-      return NextResponse.json({ audio: audioDataUrl, status: "Ready", bpm, duration, saved: false });
-    }
-
-    return NextResponse.json({
-      id: data.id,
-      audio: audioDataUrl,
-      status: "Ready",
+    const responseData = {
+      id: data?.id,
+      title: trackTitle,
       bpm,
       duration,
-      saved: true,
-    });
+      status: "Composed",
+      composition: composition,
+      saved: !error,
+      note: "Music composition generated. Full audio generation requires a paid music API (e.g. Suno, Udio, or Replicate MusicGen endpoint).",
+    };
+
+    return NextResponse.json(responseData);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Music generation failed";
     return NextResponse.json({ error: message }, { status: 500 });

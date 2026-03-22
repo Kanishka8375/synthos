@@ -83,9 +83,10 @@ create table if not exists public.generated_tracks (
   mood       text,
   duration   text,
   bpm        int,
-  audio_url  text,
-  status     text default 'Ready',
-  created_at timestamptz default now()
+  audio_url        text,
+  status           text default 'Ready',
+  composition_data text,
+  created_at       timestamptz default now()
 );
 alter table public.generated_tracks enable row level security;
 create policy "Users can CRUD own tracks" on public.generated_tracks for all using (auth.uid() = user_id);
