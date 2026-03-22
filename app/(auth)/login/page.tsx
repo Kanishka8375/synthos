@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Cpu, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { GradientText } from "@/components/ui/gradient-text";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const email = fd.get("email") as string;
@@ -22,9 +23,18 @@ export default function LoginPage() {
     }
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 800);
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   };
 
   return (
@@ -99,26 +109,6 @@ export default function LoginPage() {
               {loading ? "Signing in…" : "Sign in to studio"}
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/8" /></div>
-            <div className="relative text-center"><span className="bg-[#07070f] px-4 text-xs text-gray-600">or continue with</span></div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {["GitHub", "Google"].map((p) => (
-              <button
-                key={p}
-                onClick={() => {
-                  setLoading(true);
-                  setTimeout(() => router.push("/dashboard"), 800);
-                }}
-                className="glass glass-hover py-2.5 rounded-xl text-xs font-medium text-gray-400 hover:text-white transition-all"
-              >
-                {p}
-              </button>
-            ))}
-          </div>
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
