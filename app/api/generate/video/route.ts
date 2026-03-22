@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const hfRes = await fetch(
-      "https://api-inference.huggingface.co/models/damo-vilab/text-to-video-ms-1.7b",
+      "https://router.huggingface.co/hf-inference/models/damo-vilab/text-to-video-ms-1.7b",
       {
         method: "POST",
         headers: {
