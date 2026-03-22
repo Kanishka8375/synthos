@@ -108,7 +108,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
         description="Auto-maintained story lore and rules"
         actions={
           <div className="flex items-center gap-2">
-            <OpenClawBadge label="Bible Keeper · Mistral-7B" />
+            <OpenClawBadge label="Bible Keeper · Llama-3.3-70B" />
             <button onClick={() => setShowModal(true)}
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-all">
               <Plus className="w-3.5 h-3.5" /> New Entry
@@ -124,7 +124,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-base font-semibold text-white">New Bible Entry</h2>
-                <p className="text-xs text-gray-500 mt-0.5">AI-generated via Mistral-7B</p>
+                <p className="text-xs text-gray-500 mt-0.5">AI-generated via Llama-3.3-70B</p>
               </div>
               <button onClick={() => { setShowModal(false); setGenError(""); }} className="text-gray-500 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
@@ -155,7 +155,7 @@ Format as 3-4 paragraphs covering all important rules, details, and world-buildi
               <button onClick={createEntry} disabled={generating || !newTitle.trim() || !newPrompt.trim()}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold text-sm transition-all">
                 {generating
-                  ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Writing with Mistral-7B…</span>
+                  ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Writing with Llama-3.3-70B…</span>
                   : <span className="flex items-center justify-center gap-2"><Wand2 className="w-4 h-4" /> Generate Entry</span>
                 }
               </button>

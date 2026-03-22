@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { HfInference } from "@huggingface/inference";
 
-const hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MODEL = "meta-llama/llama-3.3-70b-instruct";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -20,25 +21,44 @@ Keep it focused and cinematic. Write 3-4 scenes maximum.`;
 
   const userMessage = `Write an anime episode script for: ${prompt}`;
 
-  try {
-    let content = "";
+  if (!OPENROUTER_API_KEY) {
+    return NextResponse.json({ error: "OpenRouter API key not configured" }, { status: 500 });
+  }
 
-    const stream = hf.chatCompletionStream({
-      model: "mistralai/Mistral-7B-Instruct-v0.3",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-      max_tokens: 1200,
-      temperature: 0.8,
+  try {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://synthos.ai",
+        "X-Title": "SYNTHOS",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        max_tokens: 1200,
+        temperature: 0.8,
+      }),
     });
 
-    for await (const chunk of stream) {
-      content += chunk.choices[0]?.delta?.content ?? "";
+    if (!res.ok) {
+      const err = await res.text();
+      return NextResponse.json({ error: `OpenRouter error: ${err}` }, { status: 500 });
+    }
+
+    const data = await res.json();
+    const content: string = data.choices?.[0]?.message?.content ?? "";
+
+    if (!content) {
+      return NextResponse.json({ error: "No content generated" }, { status: 500 });
     }
 
     // Save to Supabase
-    const { data, error } = await supabase
+    const { data: saved, error } = await supabase
       .from("generated_scripts")
       .insert({ user_id: user.id, project_id: project_id ?? null, prompt, content })
       .select()
@@ -48,7 +68,7 @@ Keep it focused and cinematic. Write 3-4 scenes maximum.`;
       return NextResponse.json({ content, saved: false });
     }
 
-    return NextResponse.json({ content, id: data.id, saved: true });
+    return NextResponse.json({ content, id: saved.id, saved: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Script generation failed";
     return NextResponse.json({ error: message }, { status: 500 });

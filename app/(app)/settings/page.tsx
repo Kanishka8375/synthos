@@ -237,9 +237,16 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-4 h-4 text-indigo-400" />
             <h2 className="text-sm font-semibold text-white">AI Services</h2>
-            <OpenClawBadge label="HuggingFace + Pollinations" size="sm" />
+            <OpenClawBadge label="OpenRouter + HuggingFace + Pollinations" size="sm" />
           </div>
           <div className="space-y-3 text-xs text-gray-400">
+            <div className="flex items-center justify-between p-3 glass rounded-xl">
+              <div>
+                <p className="text-white font-medium">OpenRouter</p>
+                <p className="text-gray-500 mt-0.5">Llama-3.3-70B — scripts, lore, ideas</p>
+              </div>
+              <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Configured</span>
+            </div>
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
                 <p className="text-white font-medium">Pollinations.ai</p>
@@ -250,9 +257,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between p-3 glass rounded-xl">
               <div>
                 <p className="text-white font-medium">HuggingFace Inference</p>
-                <p className="text-gray-500 mt-0.5">Mistral-7B (scripts) · MusicGen (audio)</p>
+                <p className="text-gray-500 mt-0.5">MusicGen (audio) · Video generation</p>
               </div>
-              <span className={`flex items-center gap-1 ${process.env.NEXT_PUBLIC_HF_CONFIGURED === "true" ? "text-emerald-400" : "text-amber-400"}`}>
+              <span className="text-emerald-400 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Configured
               </span>
             </div>

@@ -174,7 +174,7 @@ Format as:
                       disabled={trend.generatingIdea}
                       className="w-full flex items-center justify-center gap-2 text-xs bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-300 rounded-xl py-2 border border-indigo-500/20 transition-colors disabled:opacity-60">
                       {trend.generatingIdea
-                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating idea with Mistral-7B…</>
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating idea with Llama-3.3-70B…</>
                         : <><Wand2 className="w-3.5 h-3.5" /> {trend.idea ? "Regenerate idea" : "Generate content idea"}</>
                       }
                     </button>

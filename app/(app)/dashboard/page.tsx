@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const realStats = userStats ? [
     { label: "Projects",         value: userStats.projects.toString(),  icon: FolderOpen, sub: "Your real projects",       color: "text-indigo-400 bg-indigo-500/10" },
     { label: "Generated Images", value: userStats.images.toString(),    icon: ImageIcon,  sub: "Via Pollinations.ai",       color: "text-pink-400 bg-pink-500/10" },
-    { label: "Scripts",          value: userStats.scripts.toString(),   icon: FileText,   sub: "Via Mistral-7B",            color: "text-violet-400 bg-violet-500/10" },
+    { label: "Scripts",          value: userStats.scripts.toString(),   icon: FileText,   sub: "Via OpenRouter",            color: "text-violet-400 bg-violet-500/10" },
     { label: "Music Tracks",     value: userStats.tracks.toString(),    icon: Music2,     sub: "Via HuggingFace MusicGen",  color: "text-cyan-400 bg-cyan-500/10" },
   ] : stats;
 
@@ -135,7 +135,7 @@ export default function DashboardPage() {
               {/* Quick link rows */}
               {[
                 { title: "Soundtrack Forge", sub: "Generate music with MusicGen", href: "/soundtrack-forge", openclawEnabled: true, status: "Active" },
-                { title: "Episode Pipeline", sub: "Write scripts with Mistral-7B", href: "/episode-pipeline", openclawEnabled: true, status: "Active" },
+                { title: "Episode Pipeline", sub: "Write scripts with Llama-3.3-70B", href: "/episode-pipeline", openclawEnabled: true, status: "Active" },
                 { title: "Image Generation", sub: "Free via Pollinations.ai", href: "/projects", openclawEnabled: false, status: "Active" },
               ].map((p) => (
                 <Link key={p.title} href={p.href} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.03] transition-colors">
