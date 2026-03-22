@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
         num_inference_steps: steps,
         ...(negative_prompt ? { negative_prompt } : {}),
       },
-    });
+    }) as unknown as Blob;
 
     return new Response(imageBlob, {
       headers: {
-        "Content-Type": imageBlob.type || "image/jpeg",
+        "Content-Type": (imageBlob as Blob).type || "image/jpeg",
         "Cache-Control": "no-store",
         "X-Model": modelId,
         "X-Style": style ?? "none",
